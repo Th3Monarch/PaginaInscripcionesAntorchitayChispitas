@@ -39,6 +39,7 @@ Abre <http://localhost:3000>.
 | `npm run verificar:gris` | Exige que el PDF no use operadores de color |
 | `npm run verificar:layout` | Revisa páginas, márgenes y solapamientos del PDF |
 | `npm run e2e` | Recorrido completo en Chrome, del inicio al PDF |
+| `npm run e2e:borrador` | El borrador se guarda y se recupera; **corrérrelo contra `next dev`** |
 
 Los cuatro scripts de `verificar:*` y el `e2e` usan `npx tsx` y **no**
 dependen del proyecto. Para el análisis del PDF y la prueba en navegador hace
@@ -50,9 +51,25 @@ npm run build && npm start -- -p 3100   # en otra terminal
 npm run e2e
 ```
 
+`npm run e2e:borrador` es la excepción: hay que lanzarlo contra `next dev`, porque
+el fallo que persigue (ver más abajo) solo aparece en desarrollo.
+
 Si ya están instalados en otro sitio, seindican por variable de entorno:
 `PUPPETEER_PATH`, `CHROME_PATH`, `PDFJS_PATH`, `PDFJS_FONTS`, `BASE_URL`,
 `PDF_DIR`.
+
+## El borrador y el doble montaje de efectos
+
+El borrador se guarda en `pagehide` y en cada cambio de paso, **nunca en el
+cleanup del `useEffect`**. En desarrollo React monta y desmonta los efectos una
+vez más de inmediato, así que un guardado en el cleanup escribía el formulario
+vacío encima del borrador bueno: el aviso aparecía, pero al pulsar «Continuar
+donde lo dejé» todos los campos salían en blanco. Solo se veía en desarrollo,
+porque en producción ese doble montaje no ocurre.
+
+Por si acaso, `guardarBorrador` también se niega a sobrescribir un borrador con
+datos usando un guardado vacío: quien abre la ficha y sale de inmediato no
+pierde lo que ya había escrito.
 
 ## Estructura
 

@@ -120,14 +120,18 @@ export function InscripcionFlow({ grupo }: { grupo: GroupId }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* El borrador se conserva al salir de la página, recargar o cerrar la pestaña */
+  /**
+   * El borrador se conserva al recargar, cerrar o navegar.
+   *
+   * El cleanup solo quita el escuchador y a propósito NO guarda: en
+   * desarrollo React monta y desmonta los efectos una vez más de inmediato, y
+   * ese guardado inicial pisaba el borrador guardado con el formulario en
+   * blanco. Por eso el guardado ocurre en `pagehide` y en cada `irA`.
+   */
   useEffect(() => {
     const persistir = () => guardar(pasoRef.current);
     window.addEventListener("pagehide", persistir);
-    return () => {
-      window.removeEventListener("pagehide", persistir);
-      persistir();
-    };
+    return () => window.removeEventListener("pagehide", persistir);
   }, [guardar]);
 
   const irA = useCallback(

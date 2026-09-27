@@ -44,6 +44,15 @@ function normalizar(datos: Partial<Borrador> | null, grupo: GroupId): Borrador |
   };
 }
 
+/** `true` si el formulario tiene algo escrito: sirve para no pisar un borrador. */
+function conDatos(valor: unknown): boolean {
+  if (Array.isArray(valor)) return valor.some(conDatos);
+  if (valor !== null && typeof valor === "object") {
+    return Object.values(valor).some(conDatos);
+  }
+  return valor !== "" && valor !== false && valor != null;
+}
+
 /** Recupera el borrador del grupo. Si caducó, lo descarta. */
 export function leerBorrador(grupo: GroupId): Borrador | null {
   if (!disponible()) return null;
@@ -68,13 +77,25 @@ export function guardarBorrador(
 ): void {
   if (!disponible()) return;
   try {
+    const llave = clave(grupo);
+
+    /* Un guardado en blanco nunca destruye un borrador con datos: quien abre
+     * la ficha y sale de inmediato no debe perder lo que ya había escrito. */
+    if (!conDatos(valores)) {
+      const previo = window.localStorage.getItem(llave);
+      if (previo) {
+        const anterior = normalizar(JSON.parse(previo) as Partial<Borrador>, grupo);
+        if (anterior && conDatos(anterior.valores)) return;
+      }
+    }
+
     const datos: Borrador = {
       grupo,
       paso,
       valores,
       guardadoEn: new Date().toISOString(),
     };
-    window.localStorage.setItem(clave(grupo), JSON.stringify(datos));
+    window.localStorage.setItem(llave, JSON.stringify(datos));
   } catch {
     /* almacenamiento lleno o bloqueado: la inscripción sigue siendo utilizable */
   }
