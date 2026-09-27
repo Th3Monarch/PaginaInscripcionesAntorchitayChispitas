@@ -159,6 +159,7 @@ try {
     await escribir("representante.parentesco", "Madre");
     await escribir("representante.telefonoPrincipal", "8095559876");
     await escribir("representante.correo", "ana@correo.do");
+    await escribir("representante.documento", "001-1234567-8");
     await continuar(3);
 
     await escribir("emergencia.nombres", "José Pérez");

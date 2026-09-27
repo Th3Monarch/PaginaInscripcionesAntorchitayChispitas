@@ -6,10 +6,11 @@ export const APP = {
   tituloDocumento: "Ficha de inscripción y autorización",
   storageKey: "inscripcion:chispita-antorchita:v1",
   /**
-   * El documento de identidad del representante es opcional por defecto.
-   * Actívalo aquí si las normas administrativas de la comunidad lo exigen.
+   * El documento de identidad del representante es obligatorio.
+   * Desactívalo aquí si las normas administrativas de la comunidad lo
+   * dispensan; el campo queda como texto libre y la validación se relaja.
    */
-  idRepresentanteRequerido: false,
+  idRepresentanteRequerido: true,
   maxPersonasAutorizadas: 4,
   minPersonasAutorizadas: 2,
   /**
