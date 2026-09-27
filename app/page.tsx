@@ -84,6 +84,56 @@ export default function Inicio() {
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-12 sm:px-6 sm:py-14">
         <h2 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+          Cómo funciona
+        </h2>
+        <ol className="mt-6 grid gap-5 sm:grid-cols-2">
+          {FASES.map((fase, indice) => (
+            <li
+              key={fase.titulo}
+              className="flex gap-4 border border-line bg-surface p-5"
+            >
+              <span
+                aria-hidden="true"
+                className="grid size-9 shrink-0 place-items-center bg-ink text-sm font-bold text-white"
+              >
+                {indice + 1}
+              </span>
+              <span>
+                <span className="block text-base font-semibold text-ink">
+                  {fase.titulo}
+                </span>
+                <span className="mt-1.5 block text-sm leading-relaxed text-muted">
+                  {fase.texto}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ol>
+
+        <div className="mt-14 grid gap-5 lg:grid-cols-2">
+          <div className="border-l-4 border-accent bg-surface p-5">
+            <p className="text-base font-bold text-ink">Importante</p>
+            <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+              Esta herramienta corresponde únicamente a Chispita y Antorchita y
+              no constituye el proceso de incorporación al Grupo Juvenil
+              Dominicano Antorcha. La inscripción en imágenes o videos es
+              independiente: no depende de autorizar fotografías y no se
+              solicitan redes sociales personales del menor.
+            </p>
+          </div>
+          <div className="border-l-4 border-ink bg-surface p-5">
+            <p className="text-base font-bold text-ink">Tus datos</p>
+            <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+              La información se mantiene en este navegador mientras completas la
+              ficha y no se envía a ningún servidor. Si cierras la pestaña, tu
+              avance queda guardado aquí y vuelve cuando regreses; se borra al
+              llegar al inicio, al vaciar el formulario o a los 7 días.{" "}
+              {APP.notaLegal}
+            </p>
+          </div>
+        </div>
+
+        <h2 className="mt-14 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
           Elige el grupo al que se inscribe
         </h2>
         <p className="mt-2 text-sm text-muted">
@@ -137,56 +187,6 @@ export default function Inicio() {
           Cada grupo tiene su referencia y el formulario no deja continuar si
           la edad o el grado no están dentro de ella.
         </p>
-
-        <h2 className="mt-14 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-          Cómo funciona
-        </h2>
-        <ol className="mt-6 grid gap-5 sm:grid-cols-2">
-          {FASES.map((fase, indice) => (
-            <li
-              key={fase.titulo}
-              className="flex gap-4 border border-line bg-surface p-5"
-            >
-              <span
-                aria-hidden="true"
-                className="grid size-9 shrink-0 place-items-center bg-ink text-sm font-bold text-white"
-              >
-                {indice + 1}
-              </span>
-              <span>
-                <span className="block text-base font-semibold text-ink">
-                  {fase.titulo}
-                </span>
-                <span className="mt-1.5 block text-sm leading-relaxed text-muted">
-                  {fase.texto}
-                </span>
-              </span>
-            </li>
-          ))}
-        </ol>
-
-        <div className="mt-14 grid gap-5 lg:grid-cols-2">
-          <div className="border-l-4 border-accent bg-surface p-5">
-            <p className="text-base font-bold text-ink">Importante</p>
-            <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-              Esta herramienta corresponde únicamente a Chispita y Antorchita y
-              no constituye el proceso de incorporación al Grupo Juvenil
-              Dominicano Antorcha. La inscripción en imágenes o videos es
-              independiente: no depende de autorizar fotografías y no se
-              solicitan redes sociales personales del menor.
-            </p>
-          </div>
-          <div className="border-l-4 border-ink bg-surface p-5">
-            <p className="text-base font-bold text-ink">Tus datos</p>
-            <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-              La información se mantiene en este navegador mientras completas la
-              ficha y no se envía a ningún servidor. Si cierras la pestaña, tu
-              avance queda guardado aquí y vuelve cuando regreses; se borra al
-              llegar al inicio, al vaciar el formulario o a los 7 días.{" "}
-              {APP.notaLegal}
-            </p>
-          </div>
-        </div>
       </main>
 
       <Pie />
