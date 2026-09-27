@@ -6,12 +6,25 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "e2e": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/e2e.mts",
+    "verificar:referencia": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-referencia.mts",
+    "verificar:pdf": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-pdf.mts",
+    "verificar:gris": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-gris.mts",
+    "verificar:layout": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-layout.mts"
+  },
+  "engines": {
+    "node": ">=20.9.0"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
     "next": "16.3.6",
+    "pdf-lib": "^1.17.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "react-hook-form": "^7.89.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
