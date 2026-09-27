@@ -13,6 +13,7 @@
     "verificar:referencia": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-referencia.mts",
     "verificar:pdf": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-pdf.mts",
     "verificar:gris": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-gris.mts",
+    "verificar:registro": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-registro.mts",
     "verificar:layout": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-layout.mts"
   },
   "engines": {
@@ -20,6 +21,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
+    "@supabase/supabase-js": "^2.117.2",
+    "exceljs": "^4.4.0",
     "next": "16.3.6",
     "pdf-lib": "^1.17.1",
     "react": "19.2.8",

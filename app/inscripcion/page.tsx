@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { InscripcionFlow } from "@/components/InscripcionFlow";
 import { isGroupId } from "@/lib/config";
+import { registroConfigurado } from "@/lib/supabase";
 
 export default async function PaginaInscripcion({
   searchParams,
@@ -9,5 +10,7 @@ export default async function PaginaInscripcion({
 }) {
   const { grupo } = await searchParams;
   if (!isGroupId(grupo)) redirect("/");
-  return <InscripcionFlow grupo={grupo} />;
+  return (
+    <InscripcionFlow grupo={grupo} registroActivo={registroConfigurado()} />
+  );
 }

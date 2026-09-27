@@ -120,8 +120,52 @@ coordinación puede registrarlo a mano.
   `npm run verificar:gris` lo comprueba sobre los operadores del PDF. Si la
   conversión falla, el logo se omite en vez de arriesgar color.
 - **La ficha son dos páginas.** Ni una más, ni una menos.
-- **El PDF se genera en el navegador.** No hay rutas de API ni escritura en
-  disco, y por eso funciona tal cual en Vercel.
+- **El PDF se genera en el navegador.** La generación no toca el servidor, y por
+  eso funciona tal cual en Vercel. Lo único que sale del navegador es el aviso
+  opcional de ficha nueva, descrito más abajo.
+
+## La lista de fichas nuevas
+
+La página `/registros` es un aviso de que hay una ficha por recoger, no un
+registro de datos: por diseño solo guarda el nombre del participante, el grupo,
+un teléfono de contacto y la fecha. **No** se guardan el documento de identidad,
+la fecha de nacimiento, los datos de salud, la dirección ni el nombre del
+representante, porque eso viaja únicamente en el papel firmado.
+
+Puesta en marcha:
+
+1. Crea un proyecto en Supabase y pega `supabase.sql` en el editor SQL. Deja
+   RLS activado y sin políticas: la clave `anon` no puede tocar la tabla, todo
+   pasa por la API.
+2. Copia `.env.example` a `.env.local` y rellena `SUPABASE_URL` y
+   `SUPABASE_SERVICE_ROLE_KEY`.
+
+Sin esas variables el sitio funciona igual: la ficha se genera y se descarga,
+solo que no se anota en la lista. Eso es a propósito, para que la suite de
+pruebas no dependa de un servicio externo.
+
+Tres cosas que conviene no romper:
+
+- **`SUPABASE_SERVICE_ROLE_KEY` no llega nunca al navegador.** Solo la importan
+  los Route Handlers. Esa clave esquiva RLS: si se filtra, cualquiera puede
+  leer y borrar la tabla desde Internet.
+- **La minimización de datos vive en un solo sitio,** `registroDesde()` en
+  `lib/registro.ts`. Si añades un campo ahí, se guarda en una base de datos
+  consultable desde Internet. Añádelo solo si la coordinación lo pidió por
+  escrito, y actualiza a la vez el texto de privacidad de la portada.
+- **La familia autoriza antes de enviar,** con la casilla del último paso. No
+  se manda nada hasta que la marca.
+
+Pendiente por decisión de la coordinación: **borrar las filas al cerrar el
+período de inscripción.** Una tabla con datos de menores que crece sin fecha de
+caducidad solo da problemas.
+
+### `/registros` no tiene clave de acceso
+
+Es una decisión consciente, no un olvido: cualquiera que conozca la dirección
+ve la lista. `app/robots.ts` la excluye de los buscadores, que evita que un
+nombre de menor quede indexado, pero **no es seguridad**. Si algún día se
+quiere proteger de verdad, el sitio es `app/api/inscripciones/route.ts`.
 
 ## Despliegue en Vercel
 
@@ -132,7 +176,9 @@ El proyecto se detecta solo como Next.js:
 - **Install command:** `npm install`
 - **Directorio de salida:** por defecto (`.next`)
 
-No hay variables de entorno ni secretos: todo el contenido es público.
+El contenido del sitio es público. Solo hay que añadir las dos variables de
+Supabase en *Settings → Environment Variables* **si** quieres la lista activa; si
+no, el sitio funciona sin ellas.
 
 Para desplegar desde la terminal con la CLI de Vercel:
 

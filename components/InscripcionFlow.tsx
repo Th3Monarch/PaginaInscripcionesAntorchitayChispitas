@@ -83,7 +83,13 @@ function valoresIniciales(grupo: GroupId): EnrollmentValues {  return {
   };
 }
 
-export function InscripcionFlow({ grupo }: { grupo: GroupId }) {
+export function InscripcionFlow({
+  grupo,
+  registroActivo = false,
+}: {
+  grupo: GroupId;
+  registroActivo?: boolean;
+}) {
   const router = useRouter();
   const config = GRUPOS[grupo];
 
@@ -288,7 +294,12 @@ export function InscripcionFlow({ grupo }: { grupo: GroupId }) {
             <Revision valores={valores} grupo={grupo} onEditar={irA} />
           ) : null}
           {esPdf ? (
-            <PasoPdf valores={valores} grupo={grupo} onSalir={salir} />
+            <PasoPdf
+        valores={valores}
+        grupo={grupo}
+        onSalir={salir}
+        registroActivo={registroActivo}
+      />
           ) : null}
         </div>
 

@@ -2,6 +2,10 @@ import Link from "next/link";
 import { APP, GROUP_LIST } from "@/lib/config";
 import { PASOS } from "@/lib/steps";
 import { Pie } from "@/components/ui/Encabezado";
+import { registroConfigurado } from "@/lib/supabase";
+
+/** Si no hay registro configurado, la portada no promete nada que no haya. */
+const REGISTRO_ACTIVO = registroConfigurado();
 
 const FASES = [
   {
@@ -17,7 +21,7 @@ const FASES = [
   {
     titulo: "Revisa y genera el PDF",
     texto:
-      "Comprueba todo antes de continuar. La ficha se crea en el navegador, sin servidor ni base de datos.",
+      "Comprueba todo antes de continuar. La ficha se crea en tu navegador y, si lo autorizas, se avisa a la coordinación de que hay una ficha lista para recoger.",
   },
   {
     titulo: "Imprime y firma",
@@ -67,7 +71,7 @@ export default function Inicio() {
           <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-white/60">
             <span className="inline-flex items-center gap-2">
               <span aria-hidden="true" className="size-1.5 rounded-full bg-accent-claro" />
-              Sin servidor ni base de datos
+              El PDF se arma en tu navegador
             </span>
             <span className="inline-flex items-center gap-2">
               <span aria-hidden="true" className="size-1.5 rounded-full bg-accent-claro" />
@@ -124,10 +128,26 @@ export default function Inicio() {
           <div className="border-l-4 border-ink bg-surface p-5">
             <p className="text-base font-bold text-ink">Tus datos</p>
             <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-              La información se mantiene en este navegador mientras completas la
-              ficha y no se envía a ningún servidor. Si cierras la pestaña, tu
-              avance queda guardado aquí y vuelve cuando regreses; se borra al
-              llegar al inicio, al vaciar el formulario o a los 7 días.{" "}
+              Mientras completas la ficha, tu avance se guarda en este
+              navegador y se borra al llegar al inicio, al vaciar el formulario
+              o a los 7 días.{" "}
+              {REGISTRO_ACTIVO ? (
+                <>
+                  Al final, si tú lo autorizas, se envía a la coordinación el
+                  nombre del participante, el grupo y un teléfono de contacto,
+                  para que puedan recogerte la ficha. El documento de identidad,
+                  la fecha de nacimiento y los datos de salud{" "}
+                  <strong className="font-semibold text-ink">
+                    no se envían
+                  </strong>
+                  : solo viajan en el papel que entregas firmado.{" "}
+                </>
+              ) : (
+                <>
+                  Nada sale de este navegador: la ficha se arma aquí y te la
+                  descargas.{" "}
+                </>
+              )}
               {APP.notaLegal}
             </p>
           </div>

@@ -70,6 +70,65 @@ try {
     `Un grupo inválido redirige al inicio (${pagina.url()})`,
   );
 
+  /* 2b. API de fichas: valida en el servidor y degrada sin configuracion.
+   * Esto va con el fetch de Node, no con el del navegador: no necesita la
+   * pagina y asi el flujo de la prueba no depende de la interfaz. */
+  const pedirApi = async (cuerpo?: unknown) => {
+    const respuesta = await fetch(`${BASE}/api/inscripciones`, {
+      method: cuerpo ? "POST" : "GET",
+      headers: { "content-type": "application/json" },
+      body: cuerpo ? JSON.stringify(cuerpo) : undefined,
+    });
+    return { estado: respuesta.status, cuerpo: await respuesta.json() };
+  };
+
+  const apiListado = await pedirApi();
+  const apiValido = await pedirApi({
+    envio: crypto.randomUUID(),
+    grupo: "chispita",
+    participante: "Ana Lucia Perez",
+    contacto: "8095559876",
+  });
+  const apiSinUuid = await pedirApi({ grupo: "chispita", participante: "Ana" });
+  const apiGrupoInventado = await pedirApi({
+    envio: crypto.randomUUID(),
+    grupo: "inventado",
+    participante: "Ana Lucia",
+  });
+
+  comprobar(
+    apiListado.estado === 200 &&
+      typeof (apiListado.cuerpo as { configurado?: unknown }).configurado ===
+        "boolean" &&
+      Array.isArray((apiListado.cuerpo as { registros?: unknown }).registros),
+    `GET /api/inscripciones responde con la forma esperada (configurado=${(apiListado.cuerpo as { configurado?: unknown }).configurado})`,
+  );
+  comprobar(
+    apiValido.estado === 200 || apiValido.estado === 201,
+    `Un registro bien formado se acepta sin romper la ficha (HTTP ${apiValido.estado})`,
+  );
+  comprobar(
+    apiSinUuid.estado === 400,
+    `Un envio sin uuid se rechaza (HTTP ${apiSinUuid.estado})`,
+  );
+  comprobar(
+    apiGrupoInventado.estado === 400,
+    `Un grupo inexistente se rechaza (HTTP ${apiGrupoInventado.estado})`,
+  );
+
+  /* 2c. El panel de fichas se puede abrir y avisa si no hay registro. */
+  await pagina.goto(`${BASE}/registros`, { waitUntil: "networkidle0" });
+  const panel = await pagina.evaluate(() => document.body.innerText);
+  comprobar(
+    panel.includes("Fichas nuevas") && panel.includes("Descargar Excel"),
+    "El panel de fichas se abre y ofrece la descarga",
+  );
+  comprobar(
+    (apiListado.cuerpo as { configurado?: boolean }).configurado === true ||
+      panel.includes("No hay registro configurado"),
+    "El panel explica cuando el registro no esta configurado",
+  );
+
   /* 3. Recorrido completo de Chispita */
   await pagina.goto(`${BASE}/inscripcion?grupo=chispita`, { waitUntil: "networkidle0" });
   comprobar(
