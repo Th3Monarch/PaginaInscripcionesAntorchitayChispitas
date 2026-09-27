@@ -38,7 +38,9 @@ Abre <http://localhost:3000>.
 | `npm run verificar:pdf` | Genera la ficha de cada escenario y exige 2 páginas |
 | `npm run verificar:gris` | Exige que el PDF no use operadores de color |
 | `npm run verificar:layout` | Revisa páginas, márgenes y solapamientos del PDF |
+| `npm run verificar:pintura` | Mide el color real del botón del panel; caza el blanco sobre blanco |
 | `npm run e2e` | Recorrido completo en Chrome, del inicio al PDF |
+| `npm run e2e:acceso` | La puerta del panel, con un servidor arrancado **con** `PANEL_CLAVE` |
 | `npm run e2e:borrador` | El borrador se guarda y se recupera; **corrérrelo contra `next dev`** |
 
 Los cuatro scripts de `verificar:*` y el `e2e` usan `npx tsx` y **no**

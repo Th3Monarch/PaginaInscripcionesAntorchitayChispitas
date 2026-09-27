@@ -15,7 +15,8 @@
     "verificar:pdf": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-pdf.mts",
     "verificar:gris": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-gris.mts",
     "verificar:registro": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-registro.mts",
-    "verificar:layout": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-layout.mts"
+    "verificar:layout": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-layout.mts",
+    "verificar:pintura": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-pintura.mts"
   },
   "engines": {
     "node": ">=20.9.0"

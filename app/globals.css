@@ -21,6 +21,20 @@
   --color-accent-claro: var(--accent-claro);
 }
 
+/* El acento se definiía solo dentro de un [data-group], y hay paginas que no
+   viven dentro de un grupo —/registros, la pantalla de clave—. Ahi --accent no
+   existia, y todo lo que lo usa se caia a la nada: el boton primario salia
+   `text-white` sin fondo, es decir, blanco sobre blanco. Estos son los valores
+   por defecto (los mismos que «inicio»); cada [data-group] los pisa, porque
+   :root y [data-group] tienen la misma especificidad y gana el que va despues. */
+:root {
+  --accent: #b3121b;
+  --accent-strong: #7c0c12;
+  --accent-soft: #fdecee;
+  --accent-line: #e0323a;
+  --accent-claro: #ff5259;
+}
+
 [data-group="chispita"] {
   --accent: #b3121b;
   --accent-strong: #7c0c12;
