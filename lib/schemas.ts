@@ -235,7 +235,7 @@ export const enrollmentSchema = z
     if (APP.idRepresentanteRequerido && !valores.representante.documento.trim()) {
       ctx.addIssue({
         code: "custom",
-        message: "Escribe el documento de identidad",
+        message: "Escribe el documento de identidad del Representante",
         path: ["representante", "documento"],
       });
     }

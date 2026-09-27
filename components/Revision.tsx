@@ -123,7 +123,7 @@ export function Revision({
             valor={vacio(valores.representante.correo)}
           />
           <Dato
-            etiqueta="Documento de identidad"
+            etiqueta="Documento de identidad del Representante"
             valor={
               valores.representante.documento.trim()
                 ? valores.representante.documento

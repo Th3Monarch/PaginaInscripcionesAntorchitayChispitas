@@ -74,7 +74,7 @@ export function PasoRepresentante({
 
         <div className="sm:col-span-2">
           <CampoTexto
-            label="Documento de identidad"
+            label="Documento de identidad del Representante"
             registro={register("representante.documento")}
             error={msg(errores?.documento)}
             hint="Solo si lo requieren las normas administrativas de la comunidad. Opcional por defecto."
