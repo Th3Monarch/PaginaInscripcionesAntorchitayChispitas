@@ -48,7 +48,17 @@ try {
   });
   const httpErrores: string[] = [];
   pagina.on("response", (r) => {
-    if (r.status() >= 400) httpErrores.push(`http ${r.status()} ${r.url()}`);
+    if (r.status() < 400) return;
+    /* La prueba del panel pide la lista a proposito sin cookie, y el 401 es la
+     * respuesta correcta. Contarlo como fallo de la pagina seria un falso
+     * positivo. */
+    if (
+      r.status() === 401 &&
+      r.url().includes("/api/inscripciones")
+    ) {
+      return;
+    }
+    httpErrores.push(`http ${r.status()} ${r.url()}`);
   });
 
   /* 1. Landing */
@@ -97,12 +107,16 @@ try {
   });
 
   comprobar(
-    apiListado.estado === 200 &&
-      typeof (apiListado.cuerpo as { configurado?: unknown }).configurado ===
-        "boolean" &&
-      Array.isArray((apiListado.cuerpo as { registros?: unknown }).registros),
-    `GET /api/inscripciones responde con la forma esperada (configurado=${(apiListado.cuerpo as { configurado?: unknown }).configurado})`,
+    apiListado.estado === 401 || apiListado.estado === 503,
+    `Sin sesion la API de fichas no devuelve la lista (HTTP ${apiListado.estado})`,
   );
+  comprobar(
+    !JSON.stringify(apiListado.cuerpo).includes('"registros"'),
+    "La respuesta sin sesion no incluye la lista",
+  );
+
+  /* El POST sigue siendo publico: lo llaman las familias al terminar. Por eso
+   * valida en el servidor y no acepta cualquier cosa. */
   comprobar(
     apiValido.estado === 200 || apiValido.estado === 201,
     `Un registro bien formado se acepta sin romper la ficha (HTTP ${apiValido.estado})`,
@@ -116,17 +130,16 @@ try {
     `Un grupo inexistente se rechaza (HTTP ${apiGrupoInventado.estado})`,
   );
 
-  /* 2c. El panel de fichas se puede abrir y avisa si no hay registro. */
+  /* 2c. El panel pide clave antes de enseñar nada. */
   await pagina.goto(`${BASE}/registros`, { waitUntil: "networkidle0" });
   const panel = await pagina.evaluate(() => document.body.innerText);
   comprobar(
-    panel.includes("Fichas nuevas") && panel.includes("Descargar Excel"),
-    "El panel de fichas se abre y ofrece la descarga",
+    panel.includes("Acceso a la lista") && panel.includes("Clave"),
+    "El panel pide la clave en vez de mostrar la lista",
   );
   comprobar(
-    (apiListado.cuerpo as { configurado?: boolean }).configurado === true ||
-      panel.includes("No hay registro configurado"),
-    "El panel explica cuando el registro no esta configurado",
+    !panel.includes("Descargar Excel"),
+    "Sin clave no aparece el boton de descargar",
   );
 
   /* 3. Recorrido completo de Chispita */

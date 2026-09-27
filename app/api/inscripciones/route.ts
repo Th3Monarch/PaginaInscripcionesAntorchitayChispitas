@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import {
   libroExcel,
@@ -5,6 +6,7 @@ import {
   TABLA,
   type FilaRegistro,
 } from "@/lib/registro";
+import { CLAVE_VIGENTE, COOKIE_PANEL, tokenValido } from "@/lib/panel";
 import { supabaseAdmin } from "@/lib/supabase";
 
 /** exceljs necesita Node: en el edge no hay Buffer. */
@@ -85,8 +87,27 @@ export async function POST(request: Request) {
   return NextResponse.json({ guardado: true }, { status: 201 });
 }
 
-/** GET: la lista. `?formato=xlsx` devuelve el archivo para descargar. */
+/**
+ * GET: la lista. Sin sesion de panel no se devuelve nada, ni la tabla ni el
+ * Excel. `?formato=xlsx` descarga el archivo. Es la unica lectura de datos de
+ * menores que tiene el sitio, asi que va cerrada.
+ *
+ * Si no hay PANEL_CLAVE el panel NO se abre: se queda cerrado. Un despliegue
+ * sin la clave debe mostrar una pagina vacia, nunca la lista.
+ */
 export async function GET(request: Request) {
+  if (!CLAVE_VIGENTE) {
+    return NextResponse.json(
+      { error: "El panel no tiene clave configurada" },
+      { status: 503 },
+    );
+  }
+
+  const almacen = await cookies();
+  if (!tokenValido(almacen.get(COOKIE_PANEL)?.value)) {
+    return NextResponse.json({ error: "Sin acceso al panel" }, { status: 401 });
+  }
+
   const configurado = supabaseAdmin() !== null;
 
   if (!configurado) {

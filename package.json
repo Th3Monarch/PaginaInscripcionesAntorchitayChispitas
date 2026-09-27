@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "e2e": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/e2e.mts",
     "e2e:borrador": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/e2e-borrador.mts",
+    "e2e:acceso": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/e2e-acceso.mts",
     "verificar:referencia": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-referencia.mts",
     "verificar:pdf": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-pdf.mts",
     "verificar:gris": "npx --yes tsx@4 --tsconfig tsconfig.json scripts/verificar-gris.mts",

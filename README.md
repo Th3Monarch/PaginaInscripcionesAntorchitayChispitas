@@ -137,12 +137,15 @@ Puesta en marcha:
 1. Crea un proyecto en Supabase y pega `supabase.sql` en el editor SQL. Deja
    RLS activado y sin políticas: la clave `anon` no puede tocar la tabla, todo
    pasa por la API.
-2. Copia `.env.example` a `.env.local` y rellena `SUPABASE_URL` y
-   `SUPABASE_SERVICE_ROLE_KEY`.
+2. Copia `.env.example` a `.env.local` y rellena `SUPABASE_URL`,
+   `SUPABASE_SERVICE_ROLE_KEY` y `PANEL_CLAVE`.
+3. En Vercel, añade las tres como variables de entorno. `PANEL_CLAVE` es la
+   clave que teclea quien entra al panel; invéntala tú, no la publiques.
 
-Sin esas variables el sitio funciona igual: la ficha se genera y se descarga,
-solo que no se anota en la lista. Eso es a propósito, para que la suite de
-pruebas no dependa de un servicio externo.
+Sin las variables de Supabase el sitio funciona igual: la ficha se genera y se
+descarga, solo que no se anota en la lista. Eso es a propósito, para que la
+suite de pruebas no dependa de un servicio externo. Sin `PANEL_CLAVE` en
+cambio el panel **no** se abre: cerrado.
 
 Tres cosas que conviene no romper:
 
@@ -160,12 +163,37 @@ Pendiente por decisión de la coordinación: **borrar las filas al cerrar el
 período de inscripción.** Una tabla con datos de menores que crece sin fecha de
 caducidad solo da problemas.
 
-### `/registros` no tiene clave de acceso
+### `/registros` va cerrado con clave
 
-Es una decisión consciente, no un olvido: cualquiera que conozca la dirección
-ve la lista. `app/robots.ts` la excluye de los buscadores, que evita que un
-nombre de menor quede indexado, pero **no es seguridad**. Si algún día se
-quiere proteger de verdad, el sitio es `app/api/inscripciones/route.ts`.
+La lista contiene datos de menores, así que **no es pública**. Sin cookie de
+sesión, `GET /api/inscripciones` responde `401` y tanto la tabla como la descarga
+de Excel quedan cerradas; `/registros` enseña un formulario de clave en su lugar.
+
+Cómo funciona, sin cuentas de usuario:
+
+- `PANEL_CLAVE` es la clave del panel. **Solo en el servidor**, nunca en el
+  repositorio: `.env.local` está ignorado por `.gitignore`, y en Vercel es una
+  variable de entorno. No hay valor por defecto a propósito, porque una clave
+  escrita en el repositorio es una clave publicada.
+- `POST /api/acceso` compara la clave en el servidor con `timingSafeEqual` y, si
+  acierta, deja una cookie firmada con HMAC. `DELETE /api/acceso` la borra.
+- La cookie es `httpOnly` (el JavaScript no la ve), `SameSite=Strict`,
+  `Secure` en producción y caduca a los 7 días. El valor es una firma, no la
+  clave: sin `PANEL_CLAVE` las cookies firmadas dejan de validar solas.
+- **Si no hay `PANEL_CLAVE`, el panel no se abre.** Un despliegue sin la variable
+  se queda cerrado en vez de enseñar la lista: la configuración que falta debe
+  doler al que administra, no a las familias.
+- El `POST` público que usan las familias al terminar la ficha **no** lleva
+  cookie: es la parte que el sitio ofrece a cualquiera. Solo la lectura está
+  cerrada.
+
+`app/robots.ts` sigue excluyendo `/registros` y `/api/` de los buscadores. Eso no
+es seguridad —solo evita que un nombre quede indexado—; la seguridad es la clave.
+
+La puerta tiene prueba propia, `npm run e2e:acceso`, que arranca contra un
+servidor con clave y comprueba que sin cookie no sale nada, que una clave
+inventada no entra, que una cookie fabricada a mano no vale y que salir cierra la
+sesión.
 
 ## Despliegue en Vercel
 
