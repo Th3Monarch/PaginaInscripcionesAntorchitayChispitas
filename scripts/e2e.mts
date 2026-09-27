@@ -37,8 +37,10 @@ try {
   const pagina = await navegador.newPage();
   await pagina.setViewport({ width: 1280, height: 900 });
   const erroresConsola: string[] = [];
+  const avisosConsola: string[] = [];
   pagina.on("console", (m) => {
     if (m.type() === "error") erroresConsola.push(m.text());
+    if (m.type() === "warning" || m.type() === "warn") avisosConsola.push(m.text());
   });
   pagina.on("pageerror", (e) => erroresConsola.push(String(e)));
   pagina.on("requestfailed", (r) => {
@@ -302,6 +304,15 @@ try {
       !e.includes("Failed to load resource"),
   );
   comprobar(relevantes.length === 0, `Sin errores de consola: ${relevantes.join(" | ")}`);
+
+  /* Los avisos de Next.js sobre la configuración no deben reaparecer. */
+  const avisosNext = avisosConsola.filter((a) =>
+    /scroll-behavior|nextjs\.org\/docs\/messages/.test(a),
+  );
+  comprobar(
+    avisosNext.length === 0,
+    `Sin avisos de configuración de Next.js: ${avisosNext.join(" | ")}`,
+  );
   /* 4. Validacion bloquea el avance con campos vacios */
   await pagina.goto(`${BASE}/inscripcion?grupo=antorchita`, { waitUntil: "networkidle0" });
   const botones0 = await pagina.$$("nav[aria-label='Navegación del formulario'] button");

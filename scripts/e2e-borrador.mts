@@ -34,7 +34,23 @@ const navegador = await puppeteer.launch({
 try {
   const pagina = await navegador.newPage();
   await pagina.setViewport({ width: 1280, height: 900 });
+
+  /* Next.js avisa por consola de la configuración de scroll; solo en desarrollo,
+   * que es justo donde corre esta prueba. */
+  const avisosConsola: string[] = [];
+  pagina.on("console", (m) => {
+    if (m.type() === "warning" || m.type() === "warn") avisosConsola.push(m.text());
+  });
+
   await pagina.goto(`${BASE}/`, { waitUntil: "networkidle0" });
+
+  const scrollBehavior = await pagina.evaluate(
+    () => document.documentElement.getAttribute("data-scroll-behavior"),
+  );
+  comprobar(
+    scrollBehavior === "smooth",
+    `El <html> declara data-scroll-behavior para no romper la navegacion (${scrollBehavior})`,
+  );
 
   await pagina.evaluate(() => window.localStorage.clear());
 
@@ -183,6 +199,14 @@ try {
   comprobar(segundoAviso, "El borrador sigue disponible tras otro viaje al inicio");
 
   await pagina.evaluate(() => window.localStorage.clear());
+
+  const avisosNext = avisosConsola.filter((a) =>
+    /scroll-behavior|nextjs\.org\/docs\/messages/.test(a),
+  );
+  comprobar(
+    avisosNext.length === 0,
+    `Sin avisos de configuracion de Next.js: ${avisosNext.join(" | ")}`,
+  );
 } finally {
   await navegador.close();
 }
