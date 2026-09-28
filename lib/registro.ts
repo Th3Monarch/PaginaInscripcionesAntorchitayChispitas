@@ -280,15 +280,10 @@ export async function libroExcel(filas: FilaRegistro[]): Promise<Uint8Array> {
   fichas.columns = [...COLUMNAS_INSCRIPCIONES];
   for (const fila of filas) fichas.addRow(filaPlana(fila));
 
-  fichas.autoFilter = {
-    from: { row: 1, column: 1 },
-    to: { row: 1 + filas.length, column: COLUMNAS_INSCRIPCIONES.length },
-  };
   fichas.views = [{ state: "frozen", ySplit: 1 }];
   estilar(fichas, 1);
 
-  /* Hoja 2: una fila por persona autorizada, en formato largo, para poder
-   * filtrar u ordenar sin girar la hoja. */
+  /* Hoja 2: una fila por persona autorizada, en formato largo. */
   const autorizadas = libro.addWorksheet("Autorizadas");
   autorizadas.columns = [...COLUMNAS_AUTORIZADAS];
   for (const fila of filas) {
@@ -306,10 +301,6 @@ export async function libroExcel(filas: FilaRegistro[]): Promise<Uint8Array> {
       });
     }
   }
-  autorizadas.autoFilter = {
-    from: { row: 1, column: 1 },
-    to: { row: 1, column: COLUMNAS_AUTORIZADAS.length },
-  };
   autorizadas.views = [{ state: "frozen", ySplit: 1 }];
   estilar(autorizadas, 1);
 
