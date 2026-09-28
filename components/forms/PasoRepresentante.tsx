@@ -48,7 +48,7 @@ export function PasoRepresentante({
           inputMode="tel"
           requerido
           autoComplete="tel"
-          placeholder="809 000 0000"
+          tipoTelefono
           registro={register("representante.telefonoPrincipal")}
           error={msg(errores?.telefonoPrincipal)}
         />
@@ -57,7 +57,7 @@ export function PasoRepresentante({
           label="Teléfono alternativo"
           type="tel"
           inputMode="tel"
-          placeholder="Opcional"
+          tipoTelefono
           registro={register("representante.telefonoAlternativo")}
           error={msg(errores?.telefonoAlternativo)}
         />

@@ -329,7 +329,9 @@ export class Motor {
     return { texto: recorte, size: nuevo };
   }
 
-  /** Etiqueta pequeña + valor en negrita, con línea de base. */
+  /** Etiqueta pequeña + valor en negrita, con línea de base. Si el valor
+   *  está vacío y se pasa `guia`, se dibuja esa plantilla en gris cursiva
+   *  para ayudar a llenar la ficha a mano. */
   campo(
     x: number,
     y: number,
@@ -338,6 +340,7 @@ export class Motor {
     valor: string,
     color: Tinta,
     tintaValor: Tinta,
+    guia?: string,
   ): void {
     const cursor = this.y;
     this.y = y;
@@ -347,14 +350,26 @@ export class Motor {
       size: ajusteEtiqueta.size,
       color,
     });
-    const ajusteValor = this.ajustar(valor, ancho, { size: 10, negrita: true });
-    this.pagina.drawText(sanear(ajusteValor.texto), {
-      x: this.px(x),
-      y: this.alto - (y + 8.4) - ajusteValor.size,
-      size: ajusteValor.size,
-      font: this.negrita,
-      color: pintar(tintaValor),
-    });
+    const valorLimpio = sanear(valor);
+    if (valorLimpio || !guia) {
+      const ajusteValor = this.ajustar(valor, ancho, { size: 10, negrita: true });
+      this.pagina.drawText(ajusteValor.texto, {
+        x: this.px(x),
+        y: this.alto - (y + 8.4) - ajusteValor.size,
+        size: ajusteValor.size,
+        font: this.negrita,
+        color: pintar(tintaValor),
+      });
+    } else {
+      const ajusteGuia = this.ajustar(guia, ancho, { size: 8, cursiva: true });
+      this.pagina.drawText(ajusteGuia.texto, {
+        x: this.px(x),
+        y: this.alto - (y + 8.4) - ajusteGuia.size,
+        size: ajusteGuia.size,
+        font: this.cursiva,
+        color: pintar({ r: 0.45, g: 0.45, b: 0.45 }),
+      });
+    }
     this.lineaHorizontal(x, y + 22, ancho, color, 0.5);
     this.y = cursor;
   }

@@ -155,6 +155,7 @@ export function PasoInformacion({
                     label="Teléfono"
                     type="tel"
                     inputMode="tel"
+                    tipoTelefono
                     registro={register(`autorizados.${indice}.telefono` as const)}
                     error={msgAnidado(errorFila?.telefono)}
                   />

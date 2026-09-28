@@ -80,7 +80,7 @@ export function PasoParticipante({
           inputMode="tel"
           requerido
           autoComplete="tel"
-          placeholder="809 000 0000"
+          tipoTelefono
           registro={register("participante.telefonoFamiliar")}
           error={msg(errores?.telefonoFamiliar)}
         />

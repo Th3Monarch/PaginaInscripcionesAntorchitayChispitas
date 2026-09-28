@@ -28,35 +28,35 @@ const base: EnrollmentValues = {
     fechaNacimiento: "2017-04-12",
     grado: "3.º",
     institucion: "Colegio Santa Ana",
-    telefonoFamiliar: "8095551234",
+telefonoFamiliar: "04125551234",
     correoFamiliar: "familia@correo.do",
     direccion: "Calle Duarte 45, Santo Domingo",
   },
   representante: {
     nombres: "Ana Lucía Pérez",
     parentesco: "Madre",
-    telefonoPrincipal: "8095559876",
-    telefonoAlternativo: "8095554321",
+    telefonoPrincipal: "04125559876",
+    telefonoAlternativo: "04165554321",
     correo: "ana.perez@correo.do",
     documento: "001-1234567-8",
   },
-  emergencia: {
+emergencia: {
     nombres: "José Pérez",
     parentesco: "Abuelo",
-    telefono: "8095557788",
+    telefono: "04145557788",
     telefonoAlternativo: "",
   },
   autorizados: [
     {
       nombres: "Rosa Pérez",
       parentesco: "Tía",
-      telefono: "8095553333",
+      telefono: "04145553333",
       autorizada: true,
     },
     {
       nombres: "Carlos Pérez",
       parentesco: "Tío",
-      telefono: "8095554444",
+      telefono: "04225554444",
       autorizada: true,
     },
   ],
@@ -176,11 +176,11 @@ const minimos = {
     otra: "no",
     otraDetalle: "",
   },
-  autorizados: [
+autorizados: [
     {
       nombres: "Rosa Pérez",
       parentesco: "Tía",
-      telefono: "8095553333",
+      telefono: "04225553333",
       autorizada: true,
     },
     { nombres: "", parentesco: "", telefono: "", autorizada: false },

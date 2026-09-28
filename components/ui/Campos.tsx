@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type ChangeEvent, type ReactNode } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
+import { HINT_TELEFONO, MASCARA_TELEFONO, formatearTelefono } from "@/lib/telefono";
 
 type Base = {
   label: string;
@@ -18,6 +19,8 @@ type CampoTextoProps = Base & {
   max?: number;
   readOnly?: boolean;
   requerido?: boolean;
+  /** Aplica la plantilla de teléfono 0000-0000000 mientras se escribe. */
+  tipoTelefono?: boolean;
   value?: string;
 };
 
@@ -89,10 +92,21 @@ export function CampoTexto({
   max,
   readOnly,
   requerido,
+  tipoTelefono,
   value,
   placeholder,
 }: CampoTextoProps) {
   const id = idDe(registro?.name ?? label);
+  const guiaTelefono = tipoTelefono === true;
+  const peligro = guiaTelefono ? (hint ?? HINT_TELEFONO) : hint;
+  const modelo = guiaTelefono ? (placeholder ?? MASCARA_TELEFONO) : placeholder;
+
+  /** En los teléfonos el texto se normaliza al escribir: 4 dígitos, guion y 7. */
+  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (!registro?.onChange) return;
+    const valor = guiaTelefono ? formatearTelefono(e.target.value) : e.target.value;
+    registro.onChange({ target: { name: e.target.name, value: valor } });
+  };
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -104,21 +118,21 @@ export function CampoTexto({
         type={type}
         name={registro?.name}
         value={registro ? undefined : value}
-        onChange={registro?.onChange}
+        onChange={onChange}
         onBlur={registro?.onBlur}
         ref={registro?.ref}
         readOnly={readOnly}
-        placeholder={placeholder}
+        placeholder={modelo}
         autoComplete={autoComplete}
         inputMode={inputMode}
-        maxLength={max}
+        maxLength={max ?? (guiaTelefono ? 12 : undefined)}
         aria-invalid={error ? true : undefined}
-        aria-describedby={descritoPor(id, hint, error)}
+        aria-describedby={descritoPor(id, peligro, error)}
         className={`${clasesInput} ${
           error ? "border-[#a3271b] bg-[#fdf3f1]" : "border-line"
         } ${readOnly ? "bg-cream-deep text-muted" : ""}`}
       />
-      <Ayuda id={id} hint={hint} />
+      <Ayuda id={id} hint={peligro} />
       <Error id={id} error={error} />
     </div>
   );

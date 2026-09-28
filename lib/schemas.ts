@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { APP, GRUPOS } from "./config";
 import { evaluarReferencia } from "./referencia";
+import { ERROR_TELEFONO, telefonoValido } from "./telefono";
 
 /* ------------------------------------------------------------------ */
 /* Primitivas reutilizables                                            */
@@ -29,14 +30,7 @@ const telefono = z
   .string()
   .trim()
   .min(1, "Escribe el teléfono")
-  .refine(
-    (valor) => valor.replace(/\D/g, "").length >= 7,
-    "El teléfono debe tener al menos 7 dígitos",
-  )
-  .refine(
-    (valor) => /^[\d+()\s.-]+$/.test(valor),
-    "Usa solo números, espacios y los signos + ( ) -",
-  );
+  .refine(telefonoValido, ERROR_TELEFONO);
 
 const correo = z.email("Escribe un correo electrónico válido");
 
@@ -136,10 +130,10 @@ export const autorizadosSchema = z
           message: "Escribe el teléfono",
           path: [indice, "telefono"],
         });
-      } else if (persona.telefono.replace(/\D/g, "").length < 7) {
+      } else if (!telefonoValido(persona.telefono)) {
         ctx.addIssue({
           code: "custom",
-          message: "Teléfono de al menos 7 dígitos",
+          message: ERROR_TELEFONO,
           path: [indice, "telefono"],
         });
       }

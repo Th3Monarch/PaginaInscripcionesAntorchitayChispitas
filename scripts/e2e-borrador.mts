@@ -87,7 +87,7 @@ try {
   await escribir("participante.fechaNacimiento", "2017-04-12");
   await escribir("participante.grado", "3.º");
   await escribir("participante.institucion", "Colegio Santa Ana");
-  await escribir("participante.telefonoFamiliar", "8095551234");
+  await escribir("participante.telefonoFamiliar", "04125551234");
   await escribir("participante.correoFamiliar", "familia@correo.do");
   await new Promise((r) => setTimeout(r, 300));
 
@@ -101,7 +101,7 @@ try {
   await new Promise((r) => setTimeout(r, 600));
   await escribir("representante.nombres", "José Antonio Pérez");
   await escribir("representante.parentesco", "Padre");
-  await escribir("representante.telefonoPrincipal", "8095559876");
+  await escribir("representante.telefonoPrincipal", "04125559876");
   await escribir("representante.correo", "jose@correo.do");
   await new Promise((r) => setTimeout(r, 300));
 

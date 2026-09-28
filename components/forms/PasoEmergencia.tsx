@@ -41,7 +41,7 @@ export function PasoEmergencia({
           type="tel"
           inputMode="tel"
           requerido
-          placeholder="809 000 0000"
+          tipoTelefono
           registro={register("emergencia.telefono")}
           error={msg(errores?.telefono)}
         />
@@ -51,7 +51,7 @@ export function PasoEmergencia({
             label="Teléfono alternativo"
             type="tel"
             inputMode="tel"
-            placeholder="Opcional"
+            tipoTelefono
             registro={register("emergencia.telefonoAlternativo")}
             error={msg(errores?.telefonoAlternativo)}
           />

@@ -6,6 +6,7 @@ import {
   vacio,
 } from "@/lib/format";
 import type { EnrollmentValues } from "@/lib/schemas";
+import { MASCARA_TELEFONO, mostrarTelefono } from "@/lib/telefono";
 import { Motor, hex, pintar, sanear, type Tinta } from "./motor";
 
 /**
@@ -150,7 +151,7 @@ function nota(
   m.y = y + alto + 10;
 }
 
-type Celda = { etiqueta: string; valor: string };
+type Celda = { etiqueta: string; valor: string; guia?: string };
 
 /** Fila de campos dentro de un ancho dado (para sub-bloques en columnas). */
 function filaEn(m: Motor, x: number, ancho: number, celdas: Celda[], gap = 12) {
@@ -168,6 +169,7 @@ function filaEn(m: Motor, x: number, ancho: number, celdas: Celda[], gap = 12) {
       celda.valor,
       GRIS_LINEA,
       TINTA,
+      celda.guia,
     );
   });
   m.y = y + alto;
@@ -228,14 +230,19 @@ function tablaAutorizados(m: Motor, g: GroupConfig, valores: EnrollmentValues) {
     if (indice % 2 === 0) m.caja(0, yFila, m.anchoUtil, altoFila, GRIS_FONDO);
     m.lineaHorizontal(0, yFila + altoFila, m.anchoUtil, GRIS_LINEA, 0.4);
     const tinta = persona?.autorizada ? TINTA : GRIS;
-    const textos: Array<[number, string, number]> = [
-      [4, persona?.nombres ?? "", columnas[0].ancho - 8],
-      [columnas[1].x + 4, persona?.parentesco ?? "", columnas[1].ancho - 8],
-      [columnas[2].x + 4, persona?.telefono ?? "", columnas[2].ancho - 8],
+    const telAutorizado = persona?.telefono ? mostrarTelefono(persona.telefono) : "";
+    const textos: Array<[number, string, number, boolean]> = [
+      [4, persona?.nombres ?? "", columnas[0].ancho - 8, false],
+      [columnas[1].x + 4, persona?.parentesco ?? "", columnas[1].ancho - 8, false],
+      [columnas[2].x + 4, telAutorizado, columnas[2].ancho - 8, true],
     ];
-    textos.forEach(([x, texto, ancho]) => {
+    textos.forEach(([x, texto, ancho, esTelefono]) => {
       m.y = yFila + 4;
-      m.texto(texto || "-", { x, size: 8.2, color: tinta, ancho });
+      if (esTelefono && !texto) {
+        m.texto(MASCARA_TELEFONO, { x, size: 7, cursiva: true, color: GRIS, ancho });
+      } else {
+        m.texto(texto || "-", { x, size: 8.2, color: tinta, ancho });
+      }
     });
     if (persona) {
       m.casilla(columnas[3].x + 2, yFila + 5, persona.autorizada, NEGRO, 9);
@@ -380,7 +387,8 @@ function firmas(m: Motor, g: GroupConfig, valores: EnrollmentValues) {
     },
     {
       etiqueta: "Teléfono de contacto confirmado",
-      valor: vacio(valores.representante.telefonoPrincipal),
+      valor: mostrarTelefono(valores.representante.telefonoPrincipal),
+      guia: MASCARA_TELEFONO,
     },
   ]);
 
@@ -422,7 +430,11 @@ function bloquePersonas(m: Motor, g: GroupConfig, valores: EnrollmentValues) {
   ]);
   filaEn(m, 0, anchoColumna, [
     { etiqueta: "Parentesco", valor: vacio(r.parentesco) },
-    { etiqueta: "Teléfono principal", valor: vacio(r.telefonoPrincipal) },
+    {
+      etiqueta: "Teléfono principal",
+      valor: mostrarTelefono(r.telefonoPrincipal),
+      guia: MASCARA_TELEFONO,
+    },
   ]);
   filaEn(m, 0, anchoColumna, [
     {
@@ -446,7 +458,11 @@ function bloquePersonas(m: Motor, g: GroupConfig, valores: EnrollmentValues) {
   ]);
   filaEn(m, xDerecha, anchoColumna, [
     { etiqueta: "Parentesco", valor: vacio(e.parentesco) },
-    { etiqueta: "Teléfono", valor: vacio(e.telefono) },
+    {
+      etiqueta: "Teléfono",
+      valor: mostrarTelefono(e.telefono),
+      guia: MASCARA_TELEFONO,
+    },
   ]);
   filaEn(m, xDerecha, anchoColumna, [
     {
@@ -637,7 +653,11 @@ export async function construirFicha(
   fila(m, [
     { etiqueta: "Grado que cursa", valor: vacio(valores.participante.grado) },
     { etiqueta: "Institución educativa", valor: vacio(valores.participante.institucion) },
-    { etiqueta: "Teléfono familiar", valor: vacio(valores.participante.telefonoFamiliar) },
+    {
+      etiqueta: "Teléfono familiar",
+      valor: mostrarTelefono(valores.participante.telefonoFamiliar),
+      guia: MASCARA_TELEFONO,
+    },
   ]);
   fila(m, [
     {

@@ -229,19 +229,19 @@ try {
   const llenarHastaRevision = async () => {
     await escribir("representante.nombres", "Ana Lucía Pérez");
     await escribir("representante.parentesco", "Madre");
-    await escribir("representante.telefonoPrincipal", "8095559876");
+    await escribir("representante.telefonoPrincipal", "04125559876");
     await escribir("representante.correo", "ana@correo.do");
     await escribir("representante.documento", "001-1234567-8");
     await continuar(3);
 
     await escribir("emergencia.nombres", "José Pérez");
     await escribir("emergencia.parentesco", "Abuelo");
-    await escribir("emergencia.telefono", "8095557788");
+    await escribir("emergencia.telefono", "04165557788");
     await continuar(4);
 
     await escribir("autorizados.0.nombres", "Rosa Pérez");
     await escribir("autorizados.0.parentesco", "Tía");
-    await escribir("autorizados.0.telefono", "8095553333");
+    await escribir("autorizados.0.telefono", "04145553333");
     await marcar("autorizados.0.autorizada");
     await marcarPrimero("salud.alergia");
     await escribir("salud.alergiaDetalle", "Penicilina");
@@ -268,7 +268,7 @@ try {
   await escribir("participante.fechaNacimiento", "2017-04-12");
   await escribir("participante.grado", "3.º");
   await escribir("participante.institucion", "Colegio Santa Ana");
-  await escribir("participante.telefonoFamiliar", "8095551234");
+  await escribir("participante.telefonoFamiliar", "04125551234");
   await escribir("participante.correoFamiliar", "familia@correo.do");
   await escribir("participante.direccion", "Calle Duarte 45");
   const cuerpo = await pagina.$eval("body", (cuerpo) => cuerpo.textContent ?? "");
@@ -406,7 +406,7 @@ try {
   await escribir("participante.fechaNacimiento", "2013-05-20");
   await escribir("participante.grado", "6.º");
   await escribir("participante.institucion", "Colegio Del Carmen");
-  await escribir("participante.telefonoFamiliar", "8095551234");
+  await escribir("participante.telefonoFamiliar", "04125551234");
   await escribir("participante.correoFamiliar", "familia@correo.do");
   await continuar(2);
   await pagina.reload({ waitUntil: "networkidle0" });
@@ -538,7 +538,7 @@ try {
     await escribir("participante.fechaNacimiento", fecha);
     await escribir("participante.grado", grado);
     await escribir("participante.institucion", "Colegio Santa Ana");
-    await escribir("participante.telefonoFamiliar", "8095551234");
+    await escribir("participante.telefonoFamiliar", "04125551234");
     await escribir("participante.correoFamiliar", "familia@correo.do");
   };
 

@@ -71,6 +71,12 @@ for (const ruta of arch) {
 
   const plano = texto.replace(/\s+/g, " ");
   const esperaChispita = /chispita/i.test(plano);
+  if (!/peor-caso/.test(nombre)) {
+    comprobar(
+      plano.includes("0412-5559876"),
+      `${nombre}: el teléfono del representante se imprime con la plantilla (0412-5559876)`,
+    );
+  }
   comprobar(
     plano.includes("COMUNIDAD DOMINICANA"),
     `${nombre}: aparece "COMUNIDAD DOMINICANA"`,
