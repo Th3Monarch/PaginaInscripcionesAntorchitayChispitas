@@ -14,6 +14,10 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
  */
 
 const COOKIE = "panel_antorcha";
+
+/** Vigencia interna del token (cota de seguridad), no la de la cookie: la
+ * sesion muere con la pestana y, en el panel, cada visita empieza borrando la
+ * sesion anterior. */
 const DIAS_VIGENCIA = 7;
 
 export const CLAVE_VIGENTE = (() => {
@@ -66,7 +70,8 @@ export const opcionesCookie = {
   httpOnly: true,
   sameSite: "strict",
   path: "/",
-  maxAge: DIAS_VIGENCIA * 24 * 60 * 60,
+  /* Cookie de sesion, sin maxAge: no sobrevive al cierre de la pestana. Que no
+   * haya que pedir la clave dentro de la misma visita, no entre visitas. */
   secure: process.env.NODE_ENV === "production",
 } as const;
 

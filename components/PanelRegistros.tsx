@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Aviso } from "@/components/ui/Campos";
 import { Boton, Seccion } from "@/components/ui/Layout";
+import { CampoClave } from "@/components/ui/Campos";
 import { GRUPOS, isGroupId } from "@/lib/config";
 import type { FilaRegistro } from "@/lib/registro";
 
@@ -62,14 +63,24 @@ export function PanelRegistros() {
 
   useEffect(() => {
     let vigente = true;
-    const pedir = () => {
+
+    /* Cada visita al panel empieza cerrado: se borra la sesion anterior antes
+     * de mirar. Asi salir del apartado y volver siempre pide la clave otra
+     * vez; la cookie de la visita pasada no vale para entrar. */
+    const empezarCerrado = async () => {
+      await fetch("/api/acceso", { method: "DELETE" }).catch(() => null);
+      if (!vigente) return;
+      aplicar(await consultar());
+    };
+
+    void empezarCerrado();
+
+    const temporizador = window.setInterval(() => {
       void consultar().then((datos) => {
         if (vigente) aplicar(datos);
       });
-    };
+    }, REFRESCO_MS);
 
-    pedir();
-    const temporizador = window.setInterval(pedir, REFRESCO_MS);
     return () => {
       vigente = false;
       window.clearInterval(temporizador);
@@ -236,27 +247,14 @@ export function PanelRegistros() {
           descripcion="Esta lista contiene datos de menores. Es para la coordinación del grupo."
         >
           <form onSubmit={entrar} className="max-w-sm space-y-4">
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="clave-panel"
-                className="text-sm font-semibold text-ink-soft"
-              >
-                Clave
-              </label>
-              <input
-                id="clave-panel"
-                type="password"
-                value={clave}
-                autoComplete="current-password"
-                onChange={(e) => setClave(e.target.value)}
-                className="min-h-11 w-full rounded-lg border border-line bg-surface px-3 py-2 text-base text-ink shadow-xs"
-              />
-              {errorClave ? (
-                <p role="alert" className="text-xs font-medium text-[#a3271b]">
-                  {errorClave}
-                </p>
-              ) : null}
-            </div>
+            <CampoClave
+              label="Clave"
+              id="clave-panel"
+              value={clave}
+              onChange={setClave}
+              error={errorClave ?? undefined}
+              deshabilitado={entrando}
+            />
             <Boton type="submit" disabled={entrando || clave.length === 0}>
               {entrando ? "Comprobando…" : "Entrar"}
             </Boton>

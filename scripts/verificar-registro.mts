@@ -1,8 +1,9 @@
 /**
  * Comprueba la parte de la lista de fichas sin tocar Supabase:
  *   1. Que el esquema del servidor acepta lo justo y rechaza lo demas.
- *   2. Que de una ficha solo sale lo minimo. Este es el test mas importante
- *      del archivo: si alguien anade un campo a registroDesde(), falla aqui.
+ *   2. Que de una ficha sale el detalle acordado (participante, representante
+ *      con su documento, emergencia y autorizados) y NADA de salud ni de
+ *      autorizaciones. Este es el test mas importante del archivo.
  *   3. Que el .xlsx generado se puede volver a abrir y trae lo esperado.
  *
  *   npm run verificar:registro
@@ -29,6 +30,35 @@ const bueno = {
 
 comprobar(registroSchema.safeParse(bueno).success, "Acepta un registro bien formado");
 
+const conDetalle = {
+  ...bueno,
+  detalle: {
+    participante: {
+      fechaNacimiento: "2014-03-02",
+      grado: "4.º",
+      institucion: "Colegio X",
+      telefonoFamiliar: "8091112222",
+      correoFamiliar: "familia@correo.do",
+    },
+    representante: {
+      nombres: "María Pérez",
+      parentesco: "Madre",
+      telefonoPrincipal: "8095559876",
+      correo: "ana@correo.do",
+    },
+    emergencia: {
+      nombres: "José Pérez",
+      parentesco: "Abuelo",
+      telefono: "8093334444",
+    },
+    autorizados: [],
+  },
+};
+comprobar(
+  registroSchema.safeParse(conDetalle).success,
+  "Acepta un registro con el detalle completo",
+);
+
 for (const [nombre, caso] of Object.entries({
   "sin envio": { ...bueno, envio: undefined },
   "envio que no es uuid": { ...bueno, envio: "abc" },
@@ -40,7 +70,7 @@ for (const [nombre, caso] of Object.entries({
 }
 
 /* ---------------------------------------------------------------- */
-/* 2. Minimizacion de datos                                         */
+/* 2. Que sale de una ficha                                          */
 /* ---------------------------------------------------------------- */
 
 const valores = {
@@ -63,7 +93,14 @@ const valores = {
     documento: "001-1234567-8",
   },
   emergencia: { nombres: "José Pérez", parentesco: "Abuelo", telefono: "8093334444", telefonoAlternativo: "" },
-  autorizados: [],
+  autorizados: [
+    {
+      nombres: "Tía Rosa",
+      parentesco: "Tía",
+      telefono: "8295554321",
+      autorizada: true,
+    },
+  ],
   salud: { alergias: "Ninguna", medicamentos: "", notas: "" },
   autorizaciones: {
     participacion: "autorizo",
@@ -79,15 +116,21 @@ const enviado = registroDesde(valores, crypto.randomUUID());
 const claves = Object.keys(enviado).sort();
 
 comprobar(
-  claves.join(",") === "contacto,envio,grupo,participante",
-  `Solo salen las cuatro columnas acordadas (${claves.join(", ")})`,
+  claves.join(",") === "contacto,detalle,envio,grupo,participante",
+  `Salen las cinco columnas acordadas (${claves.join(", ")})`,
 );
 
 const serializado = JSON.stringify(enviado);
-for (const prohibido of ["001-1234567-8", "2014-03-02", "María Pérez", "Colegio X", "alergias", "Calle 1"]) {
+for (const pedido of ["001-1234567-8", "2014-03-02", "María Pérez", "Colegio X", "Calle 1", "8093334444", "Tía Rosa"]) {
   comprobar(
-    !serializado.includes(prohibido),
-    `El registro no contiene «${prohibido}»`,
+    serializado.includes(pedido),
+    `El registro incluye lo que pidio la coordinacion: «${pedido}»`,
+  );
+}
+for (const fuera of ["alergias", "externasInformado", "participacion", "imagenes", "compromiso"]) {
+  comprobar(
+    !serializado.includes(fuera),
+    `El registro NO contiene datos de salud ni autorizaciones («${fuera}»)`,
   );
 }
 
@@ -124,14 +167,20 @@ const abierto = new ExcelJS.Workbook();
 await abierto.xlsx.load(bytes);
 const hoja = abierto.getWorksheet("Inscripciones");
 
+const CABECERAS = "Recibido,Grupo,Participante,Edad,Fecha de nacimiento,Grado,Institución educativa,Teléfono (familia),Correo (familia),Dirección,Representante,Parentesco,Tel. representante,Tel. alternativo,Correo representante,Documento de identidad,Emergencia,Parentesco,Tel. emergencia,Tel. emergencia alt.";
+
 comprobar(hoja !== undefined, "El libro se puede volver a abrir");
 if (hoja) {
   const cabeceras = (hoja.getRow(1).values as unknown[]).slice(1).map(String);
   comprobar(
-    cabeceras.join(",") === "Recibido,Grupo,Participante,Contacto",
+    cabeceras.join(",") === CABECERAS,
     `Las columnas son las acordadas (${cabeceras.join(", ")})`,
   );
   comprobar(hoja.rowCount === filas.length + 1, `Hay ${filas.length} filas de datos`);
+  comprobar(
+    String((hoja.getRow(2).values as unknown[])[4] ?? "") === "—",
+    "Una fila sin detalle rellena la edad con guion",
+  );
   comprobar(
     String((hoja.getRow(3).values as unknown[])[3] ?? "") === "Luis Martínez",
     "La segunda fila conserva al participante",

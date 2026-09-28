@@ -133,14 +133,15 @@ export default function Inicio() {
               o a los 7 días.{" "}
               {REGISTRO_ACTIVO ? (
                 <>
-                  Al final, si tú lo autorizas, se envía a la coordinación el
-                  nombre del participante, el grupo y un teléfono de contacto,
-                  para que puedan recogerte la ficha. El documento de identidad,
-                  la fecha de nacimiento y los datos de salud{" "}
+                  Al final, si tú lo autorizas, se envía a la coordinación los
+                  datos de la ficha: participante (con fecha de nacimiento,
+                  grado, institución y dirección), representante (con su
+                  documento de identidad), contacto de emergencia y personas
+                  autorizadas. Los datos de salud y las autorizaciones{" "}
                   <strong className="font-semibold text-ink">
                     no se envían
                   </strong>
-                  : solo viajan en el papel que entregas firmado.{" "}
+                  : solo van en el papel que entregas firmado.{" "}
                 </>
               ) : (
                 <>
@@ -207,6 +208,45 @@ export default function Inicio() {
           Cada grupo tiene su referencia y el formulario no deja continuar si
           la edad o el grado no están dentro de ella.
         </p>
+
+        <h2 className="mt-16 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+          Acceso de coordinación
+        </h2>
+        <p className="mt-2 text-sm text-muted">
+          La lista de avisos de fichas va cerrada con clave y no es pública.
+          Es solo para el equipo del grupo.
+        </p>
+
+        <div className="mt-6 grid gap-5 sm:grid-cols-2">
+          <Link
+            href="/registros"
+            data-panel="registros"
+            className="group flex min-h-56 flex-col border-t-4 border-ink border-x border-b border-line bg-surface p-6 shadow-xs transition duration-200 hover:-translate-y-1 hover:border-line-strong hover:shadow-lg focus-visible:-translate-y-1"
+          >
+            <span className="text-2xl font-bold tracking-tight text-ink">
+              Panel de fichas
+            </span>
+            <span className="mt-1 text-sm font-semibold text-muted">
+              Para la coordinación
+            </span>
+            <span className="mt-4 text-sm leading-relaxed text-ink-soft">
+              Un aviso por cada ficha de inscripción generada en el sitio, con
+              descarga en Excel. La puerta pide la clave del grupo.
+            </span>
+            <span className="mt-4 inline-flex w-fit items-center gap-2 border border-line bg-cream px-2.5 py-1 text-xs font-semibold text-ink">
+              Fichas nuevas · Descarga Excel
+            </span>
+            <span className="mt-auto inline-flex items-center gap-2 pt-6 text-sm font-bold tracking-wide text-ink uppercase">
+              Entrar al panel
+              <span
+                aria-hidden="true"
+                className="transition-transform duration-200 group-hover:translate-x-1"
+              >
+                →
+              </span>
+            </span>
+          </Link>
+        </div>
       </main>
 
       <Pie />

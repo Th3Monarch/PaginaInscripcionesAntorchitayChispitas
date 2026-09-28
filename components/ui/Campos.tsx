@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 
 type Base = {
@@ -119,6 +119,105 @@ export function CampoTexto({
         } ${readOnly ? "bg-cream-deep text-muted" : ""}`}
       />
       <Ayuda id={id} hint={hint} />
+      <Error id={id} error={error} />
+    </div>
+  );
+}
+
+/** Ojo cerrado y abierto. Se dibuja aqui para no depender de una libreria. */
+function IconoOjo({ abierta }: { abierta: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="size-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {abierta ? (
+        <>
+          <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z" />
+          <circle cx="12" cy="12" r="2.75" />
+        </>
+      ) : (
+        <>
+          <path d="M4 4.5 20 20.5" />
+          <path d="M9.7 5.9A9.6 9.6 0 0 1 12 5.5c6.4 0 10 6.5 10 6.5a17.6 17.6 0 0 1-3.3 4.1" />
+          <path d="M6.4 7.9A17.4 17.4 0 0 0 2 12s3.6 6.5 10 6.5a9.9 9.9 0 0 0 3.3-.6" />
+          <path d="M9.9 10.2a2.75 2.75 0 0 0 3.8 3.9" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+type CampoClaveProps = {
+  label: string;
+  id: string;
+  value: string;
+  onChange: (valor: string) => void;
+  autoComplete?: string;
+  error?: string;
+  deshabilitado?: boolean;
+};
+
+/**
+ * Campo de clave con el ojo de «ver la contrasena».
+ *
+ * Va en este archivo y no suelto en el panel porque comparte rotulo, borde,
+ * ayuda y error con los demas campos: si se duplica, un dia divergen.
+ */
+export function CampoClave({
+  label,
+  id,
+  value,
+  onChange,
+  autoComplete = "current-password",
+  error,
+  deshabilitado,
+}: CampoClaveProps) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Rotulo htmlFor={id}>{label}</Rotulo>
+
+      {/* El boton va dentro del borde del campo, no al lado: asi el campo no
+          pierde ancho y el ojo cae donde el dedo ya esta. */}
+      <div className="relative">
+        <input
+          id={id}
+          type={visible ? "text" : "password"}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          autoComplete={autoComplete}
+          disabled={deshabilitado}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={descritoPor(id, undefined, error)}
+          /* padding a la derecha para que el texto no se meta debajo del ojo */
+          className={`${clasesInput} pr-12 ${
+            error ? "border-[#a3271b] bg-[#fdf3f1]" : "border-line"
+          }`}
+        />
+        <button
+          type="button"
+          /* type=button a proposito: dentro de un form, un boton sin type
+             sends y aqui entraria la clave antes de tiempo. */
+          onClick={() => setVisible(!visible)}
+          disabled={deshabilitado}
+          aria-pressed={visible}
+          aria-label={visible ? "Ocultar la clave" : "Ver la clave"}
+          aria-controls={id}
+          title={visible ? "Ocultar la clave" : "Ver la clave"}
+          className="absolute inset-y-0 right-0 flex min-h-11 w-11 items-center justify-center rounded-r-lg text-muted transition-colors hover:text-ink focus-visible:text-ink active:text-ink disabled:opacity-55"
+        >
+          <IconoOjo abierta={visible} />
+        </button>
+      </div>
+
       <Error id={id} error={error} />
     </div>
   );

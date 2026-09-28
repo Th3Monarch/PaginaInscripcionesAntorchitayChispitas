@@ -22,7 +22,7 @@ async function listar(): Promise<FilaRegistro[]> {
 
   const { data, error } = await supabase
     .from(TABLA)
-    .select("envio,recibido,grupo,participante,contacto")
+    .select("envio,recibido,grupo,participante,contacto,detalle")
     .order("recibido", { ascending: false })
     .limit(LIMITE_FILAS);
 

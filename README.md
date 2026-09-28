@@ -128,20 +128,24 @@ coordinación puede registrarlo a mano.
 
 ## La lista de fichas nuevas
 
-La página `/registros` es un aviso de que hay una ficha por recoger, no un
-registro de datos: por diseño solo guarda el nombre del participante, el grupo,
-un teléfono de contacto y la fecha. **No** se guardan el documento de identidad,
-la fecha de nacimiento, los datos de salud, la dirección ni el nombre del
-representante, porque eso viaja únicamente en el papel firmado.
+La página `/registros` es el aviso de que hay una ficha por recoger. Guarda el
+nombre, el grupo, la fecha y el **detalle que pidió la coordinación**: datos del
+participante (fecha de nacimiento, grado, institución, teléfono, correo y
+dirección), representante (incluido su documento de identidad), contacto de
+emergencia y personas autorizadas. **No** se guardan los datos de salud ni el
+bloque de autorizaciones: eso viaja únicamente en el papel firmado.
 
 Puesta en marcha:
 
 1. Crea un proyecto en Supabase y pega `supabase.sql` en el editor SQL. Deja
    RLS activado y sin políticas: la clave `anon` no puede tocar la tabla, todo
    pasa por la API.
-2. Copia `.env.example` a `.env.local` y rellena `SUPABASE_URL`,
+2. Si el proyecto Supabase **ya existe** de antes, `supabase.sql` añade solo la
+   columna `detalle` cuando la ejecutes de nuevo (`alter table ... add column if
+   not exists`). No depende de recrear la tabla.
+3. Copia `.env.example` a `.env.local` y rellena `SUPABASE_URL`,
    `SUPABASE_SERVICE_ROLE_KEY` y `PANEL_CLAVE`.
-3. En Vercel, añade las tres como variables de entorno. `PANEL_CLAVE` es la
+4. En Vercel, añade las tres como variables de entorno. `PANEL_CLAVE` es la
    clave que teclea quien entra al panel; invéntala tú, no la publiques.
 
 Sin las variables de Supabase el sitio funciona igual: la ficha se genera y se
@@ -154,10 +158,12 @@ Tres cosas que conviene no romper:
 - **`SUPABASE_SERVICE_ROLE_KEY` no llega nunca al navegador.** Solo la importan
   los Route Handlers. Esa clave esquiva RLS: si se filtra, cualquiera puede
   leer y borrar la tabla desde Internet.
-- **La minimización de datos vive en un solo sitio,** `registroDesde()` en
+- **Qué se guarda se decide en un solo sitio,** `registroDesde()` en
   `lib/registro.ts`. Si añades un campo ahí, se guarda en una base de datos
-  consultable desde Internet. Añádelo solo si la coordinación lo pidió por
-  escrito, y actualiza a la vez el texto de privacidad de la portada.
+  consultable desde Internet. Ahora se guarda el detalle de la ficha que pidió
+  la coordinación (participante, representante con su documento, emergencia y
+  autorizados); los datos de salud y las autorizaciones siguen fuera. Si esto
+  cambia, actualiza a la vez el texto de privacidad de la portada.
 - **La familia autoriza antes de enviar,** con la casilla del último paso. No
   se manda nada hasta que la marca.
 
@@ -180,8 +186,13 @@ Cómo funciona, sin cuentas de usuario:
 - `POST /api/acceso` compara la clave en el servidor con `timingSafeEqual` y, si
   acierta, deja una cookie firmada con HMAC. `DELETE /api/acceso` la borra.
 - La cookie es `httpOnly` (el JavaScript no la ve), `SameSite=Strict`,
-  `Secure` en producción y caduca a los 7 días. El valor es una firma, no la
-  clave: sin `PANEL_CLAVE` las cookies firmadas dejan de validar solas.
+  `Secure` en producción y **de sesión**: no sobrevive al cierre de la pestaña.
+  El valor es una firma, no la clave: sin `PANEL_CLAVE` las cookies firmadas
+  dejan de validar solas.
+- **Cada vez que se entra al apartado se pide la clave.** En cuanto carga, el
+  panel borra la sesión anterior antes de consultar. Salir de `/registros` y
+  volver (aunque sea a la página principal y con la pestaña abierta) obliga a
+  teclearla otra vez.
 - **Si no hay `PANEL_CLAVE`, el panel no se abre.** Un despliegue sin la variable
   se queda cerrado en vez de enseñar la lista: la configuración que falta debe
   doler al que administra, no a las familias.
@@ -196,6 +207,10 @@ La puerta tiene prueba propia, `npm run e2e:acceso`, que arranca contra un
 servidor con clave y comprueba que sin cookie no sale nada, que una clave
 inventada no entra, que una cookie fabricada a mano no vale y que salir cierra la
 sesión.
+
+El Excel tiene su propia comprobación sin servidor, `npm run e2e:excel`: genera
+el archivo con datos de ejemplo y revisa que estén las tres hojas, los
+encabezados, la edad calculada y los totales del resumen.
 
 ## Despliegue en Vercel
 
