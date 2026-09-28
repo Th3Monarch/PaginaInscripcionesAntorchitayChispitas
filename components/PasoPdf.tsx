@@ -213,10 +213,6 @@ export function PasoPdf({
             papel.
           </li>
           <li>
-            El bloque «Uso exclusivo de la coordinación» lo completa el equipo
-            responsable, no la familia.
-          </li>
-          <li>
             El bloque de imágenes es independiente: la inscripción no depende
             de esa autorización.
           </li>
