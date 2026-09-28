@@ -250,19 +250,28 @@ const COLUMNAS_AUTORIZADAS = [
 ] as const;
 
 /**
- * Borde fino a todo, cabeza negra (todo lo que este dentro de las
- * `filasEncabezado` primeras). En las hojas con dos filas de encabezado,
- * Recibido y Grupo quedan fuera de los bloques y no se rellenan.
+ * Borde fino a todo. En las hojas con dos filas de encabezado, la primera fila
+ * es la banda de bloques: se pinta completa (incluso sobre las columnas sin
+ * bloque) y sus títulos se anclan a la izquierda de cada bloque, para que no
+ * queden flotando sobre columnas de distinto ancho.
  */
 function estilar(hoja: import("exceljs").Worksheet, filasEncabezado: number): void {
   hoja.eachRow((fila, numero) => {
-    fila.eachCell((celda, numeroColumna) => {
+    fila.eachCell((celda) => {
       celda.border = BORDE;
-      if (numero === 1 && filasEncabezado > 1 && numeroColumna <= 2) return;
-      if (numero <= filasEncabezado) {
-        Object.assign(celda, ENCABEZADO);
-      } else {
+      if (numero > filasEncabezado) {
         celda.alignment = { vertical: "top", horizontal: "left", wrapText: true };
+        return;
+      }
+      Object.assign(celda, ENCABEZADO);
+      if (filasEncabezado > 1 && numero === 1) {
+        celda.alignment = {
+          vertical: "middle",
+          horizontal: "left",
+          wrapText: false,
+          indent: 1,
+        };
+        celda.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
       }
     });
   });
@@ -293,10 +302,15 @@ export async function libroExcel(filas: FilaRegistro[]): Promise<Uint8Array> {
     });
     fichas.getCell(1, bloque.desde).value = bloque.nombre;
   }
+  /* Sobre Recibido y Grupo la banda se rellena para no dejar un hueco. */
+  fichas.getCell(1, 1).value = "";
+  fichas.getCell(1, 2).value = "";
 
+  /* El filtro va sobre los 20 encabezados (fila 2), no sobre la banda de
+   * bloques: asi los embudos no caen encima de los separadores. */
   fichas.autoFilter = {
-    from: { row: 1, column: 1 },
-    to: { row: 2, column: COLUMNAS_INSCRIPCIONES.length },
+    from: { row: 2, column: 1 },
+    to: { row: 2 + filas.length, column: COLUMNAS_INSCRIPCIONES.length },
   };
   fichas.views = [{ state: "frozen", ySplit: 2 }];
   estilar(fichas, 2);
