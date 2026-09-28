@@ -116,11 +116,12 @@ coordinación puede registrarlo a mano.
 
 - **La web es roja, negra y blanca.** Fondo claro, texto oscuro, un solo rojo de
   acento por grupo (`GRUPOS[].acento`).
-- **El PDF es estrictamente blanco y negro.** Se imprime en una copistería
-  normal, así que no puede tener color. El logo oficial sí tiene color, por eso
-  `pdf/index.ts` lo convierte a escala de grises antes de incrustarlo, y
-  `npm run verificar:gris` lo comprueba sobre los operadores del PDF. Si la
-  conversión falla, el logo se omite en vez de arriesgar color.
+- **El PDF es blanco y negro salvo el logo.** Se imprime en una copistería
+  normal, así que todo el texto y los dibujos van en gris. La única excepción es
+  el logo oficial, que se incrusta **a color** (`pdf/index.ts` ya no lo degrada).
+  `npm run verificar:gris` revisa los operadores del PDF: todos los textos y
+  líneas deben ser grises y debe caber **exactamente una imagen**, el logo. Si el
+  logo no carga, la ficha se genera sin él.
 - **La ficha son dos páginas.** Ni una más, ni una menos.
 - **El PDF se genera en el navegador.** La generación no toca el servidor, y por
   eso funciona tal cual en Vercel. Lo único que sale del navegador es el aviso
@@ -164,8 +165,9 @@ Tres cosas que conviene no romper:
   la coordinación (participante, representante con su documento, emergencia y
   autorizados); los datos de salud y las autorizaciones siguen fuera. Si esto
   cambia, actualiza a la vez el texto de privacidad de la portada.
-- **La familia autoriza antes de enviar,** con la casilla del último paso. No
-  se manda nada hasta que la marca.
+- **El aviso a la coordinación sale solo al terminar la ficha.** Sin casillas:
+  en cuanto el PDF queda listo se registra el aviso, una sola vez por envio. Si
+  esto cambiara, actualiza a la vez el texto de la portada.
 
 Pendiente por decisión de la coordinación: **borrar las filas al cerrar el
 período de inscripción.** Una tabla con datos de menores que crece sin fecha de

@@ -1,15 +1,25 @@
 ﻿/**
  * Genera la ficha de todos los escenarios y comprueba que ninguno se pasa de
  * dos páginas. Deja los PDF en la carpeta temporal para poder revisarlos.
+ * Incluye el logo oficial a color, como en el navegador.
  *   npm run verificar:pdf
  */
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { EnrollmentValues } from "@/lib/schemas";
 import { construirFicha } from "@/pdf/ficha";
 
 const SALIDA = process.env.PDF_DIR ?? tmpdir();
+
+/** El logo tal cual, a color. Si no está, la ficha sale sin él. */
+async function cargarLogo(): Promise<Uint8Array | undefined> {
+  try {
+    return new Uint8Array(await readFile("public/logo-antorcha.png"));
+  } catch {
+    return undefined;
+  }
+}
 
 const base: EnrollmentValues = {
   grupo: "chispita",
@@ -208,6 +218,7 @@ const escenarios: Array<{ nombre: string; valores: EnrollmentValues }> = [
 ];
 
 let fallos = 0;
+const logo = await cargarLogo();
 await mkdir(SALIDA, { recursive: true });
 for (const escenario of escenarios) {
   const errores: string[] = [];
@@ -215,7 +226,7 @@ for (const escenario of escenarios) {
   console.error = (...parte: unknown[]) => {
     errores.push(parte.map((p) => String(p)).join(" "));
   };
-  const { bytes, paginas } = await construirFicha(escenario.valores);
+  const { bytes, paginas } = await construirFicha(escenario.valores, logo);
   console.error = errorOriginal;
 
   const limite = paginas > 2 || errores.length > 0;

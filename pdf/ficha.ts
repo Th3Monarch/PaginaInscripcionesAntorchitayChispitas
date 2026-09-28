@@ -9,8 +9,10 @@ import type { EnrollmentValues } from "@/lib/schemas";
 import { Motor, hex, pintar, sanear, type Tinta } from "./motor";
 
 /**
- * El documento se entrega impreso en blanco y negro: la paleta es
- * exclusivamente gris, sin COLOR. `GRUPOS[].acento` no se usa aquí.
+ * El documento se entrega impreso en blanco y negro: la paleta de textos y
+ * dibujos es exclusivamente gris, sin COLOR. La unica excepcion es el logo,
+ * que viaja a color porque es la imagen oficial del grupo.
+ * `GRUPOS[].acento` no se usa aquí.
  */
 const TINTA = hex("#1a1a1a");
 const GRIS = hex("#5c5c5c");

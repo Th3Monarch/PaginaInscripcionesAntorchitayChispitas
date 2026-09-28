@@ -26,16 +26,15 @@ export function PasoPdf({
 }) {
   const [pdf, setPdf] = useState<ResultadoPdf | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [consentido, setConsentido] = useState(false);
   const [envio, setEnvio] = useState<
     "pendiente" | "guardado" | "no-configurado" | "fallo"
   >("pendiente");
   const config = GRUPOS[grupo];
 
-  /* El aviso a la coordinacion sale solo despues de que la familia marque la
-   * casilla, y una unica vez por envio. */
+  /* El aviso a la coordinacion sale solo, sin casilla: en cuanto la ficha
+   * queda lista se registra una unica vez por envio. */
   useEffect(() => {
-    if (!consentido || envio !== "pendiente") return;
+    if (!registroActivo || envio !== "pendiente" || !pdf) return;
 
     let vigente = true;
     const id = idEnvio(grupo);
@@ -54,7 +53,7 @@ export function PasoPdf({
       vigente = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [consentido, envio, grupo]);
+  }, [registroActivo, envio, grupo, pdf]);
 
   useEffect(() => {
     let vigente = true;
@@ -159,31 +158,18 @@ export function PasoPdf({
                 className="rounded-lg border border-line bg-cream-deep p-3"
                 data-registro={envio}
               >
-                <label
-                  htmlFor="casilla-registro"
-                  className="flex cursor-pointer items-start gap-3"
-                >
-                  <input
-                    id="casilla-registro"
-                    type="checkbox"
-                    checked={consentido}
-                    disabled={envio !== "pendiente"}
-                    onChange={(e) => setConsentido(e.target.checked)}
-                    className="mt-0.5 size-6 shrink-0 accent-[var(--accent)]"
-                  />
-                  <span className="text-sm leading-snug">
-                    <span className="font-medium text-ink">
-                      Avisar a la coordinación de que hay una ficha nueva
-                    </span>
-                    <span className="mt-1 block text-xs text-muted">
-                      Al marcar esto se envía a la coordinación el nombre de{" "}
-                      {valores.participante.nombres}, el grupo y un teléfono de
-                      contacto. No se envía el documento de identidad, la fecha
-                      de nacimiento ni los datos de salud: eso solo viaja en el
-                      papel que entregas firmado.
-                    </span>
+                <p className="text-sm leading-snug">
+                  <span className="font-medium text-ink">
+                    Aviso automático a la coordinación
                   </span>
-                </label>
+                  <span className="mt-1 block text-xs text-muted">
+                    Al terminar la ficha se envía a la coordinación el nombre de{" "}
+                    {valores.participante.nombres}, el grupo y un teléfono de
+                    contacto. No se envía el documento de identidad, la fecha
+                    de nacimiento ni los datos de salud: eso solo viaja en el
+                    papel que entregas firmado.
+                  </span>
+                </p>
 
                 {envio === "guardado" ? (
                   <p

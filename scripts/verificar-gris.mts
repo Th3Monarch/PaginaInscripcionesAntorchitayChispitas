@@ -1,5 +1,7 @@
 /**
- * Comprueba que el PDF generado no usa operadores de color.
+ * Comprueba que el PDF generado cumple la regla de tinta: los operadores de
+ * texto y dibujo deben ser todo gris (r === g === b), y debe caber
+ * exactamente una imagen, que es el logo oficial a color.
  * Necesita `pdfjs-dist` (no es dependencia del proyecto):
  *   npm i -D pdfjs-dist    (o indicarlo con PDFJS_PATH)
  *   npm run verificar:pdf
@@ -27,8 +29,9 @@ for (const ruta of arch) {
     standardFontDataUrl: pathToFileURL(STANDARD_FONTS).href,
   }).promise;
 
-  /* 1. Todo el color debe ser gris (r === g === b). */
+  /* 1. Todo el color de texto y dibujo debe ser gris (r === g === b). */
   const colores: Array<{ r: number; g: number; b: number }> = [];
+  let imagenes = 0;
   let texto = "";
   for (let n = 1; n <= doc.numPages; n += 1) {
     const pagina = await doc.getPage(n);
@@ -43,6 +46,8 @@ for (const ruta of arch) {
       ) {
         colores.push({ r: ops.argsArray[i][0], g: ops.argsArray[i][1], b: ops.argsArray[i][2] });
       }
+      /* La unica imagen permitida es el logo, que va a color. */
+      if (fn === OPS.paintImageXObject) imagenes += 1;
     }
     const contenido = await pagina.getTextContent();
     texto += contenido.items
@@ -56,8 +61,12 @@ for (const ruta of arch) {
   const nombre = ruta.split(/[\\/]/).pop();
   comprobar(
     conColor.length === 0,
-    `${nombre}: ${colores.length} operadores de color, ${conColor.length} con color (0 = solo gris)` +
+    `${nombre}: ${colores.length} operadores de texto/dibujo, ${conColor.length} con color (0 = solo gris)` +
       (conColor.length ? ` -> ${JSON.stringify(conColor.slice(0, 3))}` : ""),
+  );
+  comprobar(
+    imagenes === 1,
+    `${nombre}: exactamente 1 imagen, el logo a color (${imagenes} imagen(es))`,
   );
 
   const plano = texto.replace(/\s+/g, " ");
@@ -85,5 +94,5 @@ for (const ruta of arch) {
   console.log("");
 }
 
-console.log(fallos === 0 ? "PDF EN BLANCO Y NEGRO CORRECTO" : `FALLOS: ${fallos}`);
+console.log(fallos === 0 ? "PDF EN GRIS CON LOGO A COLOR CORRECTO" : `FALLOS: ${fallos}`);
 process.exit(fallos === 0 ? 0 : 1);

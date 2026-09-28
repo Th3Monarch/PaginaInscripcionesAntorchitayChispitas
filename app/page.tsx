@@ -21,7 +21,7 @@ const FASES = [
   {
     titulo: "Revisa y genera el PDF",
     texto:
-      "Comprueba todo antes de continuar. La ficha se crea en tu navegador y, si lo autorizas, se avisa a la coordinación de que hay una ficha lista para recoger.",
+      "Comprueba todo antes de continuar. La ficha se crea en tu navegador y se avisa sola a la coordinación de que hay una ficha lista para recoger.",
   },
   {
     titulo: "Imprime y firma",
@@ -133,7 +133,7 @@ export default function Inicio() {
               o a los 7 días.{" "}
               {REGISTRO_ACTIVO ? (
                 <>
-                  Al final, si tú lo autorizas, se envía a la coordinación los
+                  Al terminar la ficha, se envía automáticamente a la coordinación los
                   datos de la ficha: participante (con fecha de nacimiento,
                   grado, institución y dirección), representante (con su
                   documento de identidad), contacto de emergencia y personas
