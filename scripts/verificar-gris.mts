@@ -1,19 +1,66 @@
 /**
  * Comprueba que el PDF generado cumple la regla de tinta: los operadores de
  * texto y dibujo deben ser todo gris (r === g === b), y debe caber
- * exactamente una imagen, que es el logo oficial a color.
+ * exactamente una imagen, el logo oficial: se decodifica su stream y se
+ * verifica que sus pixeles llevan color.
  * Necesita `pdfjs-dist` (no es dependencia del proyecto):
  *   npm i -D pdfjs-dist    (o indicarlo con PDFJS_PATH)
- *   npm run verificar:pdf
+ *   npm run verificar:pdf        (genera las fichas de ejemplo)
  *   npm run verificar:gris -- %TEMP%\\chispita-tipico.pdf
  */
 import { readFile } from "node:fs/promises";
+import { inflateSync } from "node:zlib";
 import { pathToFileURL } from "node:url";
 import { carpetaFuentesPdf, rutaPdfJs } from "./herramientas.mts";
 
 const STANDARD_FONTS = carpetaFuentesPdf();
 
 const { getDocument, OPS } = await import(pathToFileURL(rutaPdfJs()).href);
+
+/**
+ * Busca los objetos /Subtype /Image del PDF y decodifica el stream del logo
+ * (FlateDecode). Devuelve cuantos hay y cuantos pixeles llevan color.
+ */
+function imagenDelPdf(datos: Uint8Array): {
+  objetos: number;
+  aColor: number;
+  colorEspacio: string;
+} {
+  const texto = Buffer.from(datos).toString("latin1");
+  const marcas = [...texto.matchAll(/\/Subtype\s*\/Image/g)];
+  let aColor = 0;
+  let colorEspacio = "sin-imagen";
+  for (const marca of marcas) {
+    const desde = marca.index;
+    if (desde === undefined) continue;
+    const streamIni = texto.indexOf("stream", desde);
+    if (streamIni < 0) continue;
+    const streamFin = texto.indexOf("endstream", streamIni);
+    const cabeza = texto.slice(desde, streamIni + 6);
+    const cs = (cabeza.match(/\/ColorSpace\s+(\/\w+)/) || [])[1] ?? "?";
+    colorEspacio = cs;
+    if (cs !== "/DeviceRGB") continue;
+    for (const salto of [7, 6]) {
+      const recorte = texto
+        .slice(streamIni + salto, streamFin)
+        .replace(/[ \t\r\n]+$/g, "");
+      let deco: Buffer;
+      try {
+        deco = inflateSync(Buffer.from(recorte, "latin1"));
+      } catch {
+        continue;
+      }
+      for (let p = 0; p + 3 <= deco.length; p += 3) {
+        const extremo =
+          Math.max(deco[p], deco[p + 1], deco[p + 2]) -
+          Math.min(deco[p], deco[p + 1], deco[p + 2]);
+        if (extremo > 6) aColor += 1;
+      }
+      break;
+    }
+  }
+  return { objetos: marcas.length, aColor, colorEspacio };
+}
 
 const arch = process.argv.slice(2);
 let fallos = 0;
@@ -67,6 +114,17 @@ for (const ruta of arch) {
   comprobar(
     imagenes === 1,
     `${nombre}: exactamente 1 imagen, el logo a color (${imagenes} imagen(es))`,
+  );
+
+  /* 3. La unica imagen decodifica con pixeles a color (RGB de verdad). */
+  const logo = imagenDelPdf(datos);
+  comprobar(
+    logo.objetos === 1,
+    `${nombre}: exactamente 1 objeto de imagen, el logo (se ven ${logo.objetos})`,
+  );
+  comprobar(
+    logo.colorEspacio === "/DeviceRGB" && logo.aColor > 0,
+    `${nombre}: el logo es la unica imagen a color (${logo.aColor} px en ${logo.colorEspacio})`,
   );
 
   const plano = texto.replace(/\s+/g, " ");

@@ -328,7 +328,7 @@ try {
       bytes.subarray(0, 5).toString() === "%PDF-",
       "El archivo descargado es un PDF valido",
     );
-    /* El logo se incrusta en gris: el PDF real no debe traer color. */
+    /* El logo es la unica imagen y viaja a color; el resto es gris. */
     const pdfReal = join(carpeta, descargados[0]);
     comprobar(
       bytes.length > 20_000,
