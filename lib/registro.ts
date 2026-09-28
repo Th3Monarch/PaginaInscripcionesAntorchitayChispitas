@@ -193,7 +193,7 @@ export const COLUMNAS_INSCRIPCIONES = [
   { header: "Teléfono alternativo", key: "telefonoAlternativoEmergencia", width: 18 },
 ] as const;
 
-/** Columna de cada bloque de la hoja y de la tabla del panel (de 1 a N). */
+/** Columna de cada bloque de la tabla del panel (de 1 a N). */
 export const BLOQUES_INSCRIPCIONES = [
   { nombre: "Participante", desde: 3, hasta: 10 },
   { nombre: "Representante", desde: 11, hasta: 16 },
@@ -250,10 +250,8 @@ const COLUMNAS_AUTORIZADAS = [
 ] as const;
 
 /**
- * Borde fino a todo. En las hojas con dos filas de encabezado, la primera fila
- * es la banda de bloques: se pinta completa (incluso sobre las columnas sin
- * bloque) y sus títulos se anclan a la izquierda de cada bloque, para que no
- * queden flotando sobre columnas de distinto ancho.
+ * Borde fino a todo y encabezado negro (las `filasEncabezado` primeras) con
+ * texto blanco y centrado. Las celdas de datos quedan con texto envuelto.
  */
 function estilar(hoja: import("exceljs").Worksheet, filasEncabezado: number): void {
   hoja.eachRow((fila, numero) => {
@@ -264,15 +262,6 @@ function estilar(hoja: import("exceljs").Worksheet, filasEncabezado: number): vo
         return;
       }
       Object.assign(celda, ENCABEZADO);
-      if (filasEncabezado > 1 && numero === 1) {
-        celda.alignment = {
-          vertical: "middle",
-          horizontal: "left",
-          wrapText: false,
-          indent: 1,
-        };
-        celda.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
-      }
     });
   });
 }
@@ -285,35 +274,18 @@ export async function libroExcel(filas: FilaRegistro[]): Promise<Uint8Array> {
   libro.creator = "Inscripciones Chispita y Antorchita";
   libro.created = new Date();
 
-  /* Hoja 1: una fila por ficha, con todos los datos del detalle. La primera
-   * fila agrupa las columnas por bloques: Participante, Representante y
-   * Contacto de emergencia, igual que en la ficha. */
+  /* Hoja 1: una fila por ficha, con todos los datos del detalle. Los 20
+   * encabezados van en una sola fila, sin agrupar por bloques. */
   const fichas = libro.addWorksheet("Inscripciones");
   fichas.columns = [...COLUMNAS_INSCRIPCIONES];
   for (const fila of filas) fichas.addRow(filaPlana(fila));
 
-  fichas.insertRow(1, []);
-  for (const bloque of BLOQUES_INSCRIPCIONES) {
-    fichas.mergeCells({
-      top: 1,
-      left: bloque.desde,
-      bottom: 1,
-      right: bloque.hasta,
-    });
-    fichas.getCell(1, bloque.desde).value = bloque.nombre;
-  }
-  /* Sobre Recibido y Grupo la banda se rellena para no dejar un hueco. */
-  fichas.getCell(1, 1).value = "";
-  fichas.getCell(1, 2).value = "";
-
-  /* El filtro va sobre los 20 encabezados (fila 2), no sobre la banda de
-   * bloques: asi los embudos no caen encima de los separadores. */
   fichas.autoFilter = {
-    from: { row: 2, column: 1 },
-    to: { row: 2 + filas.length, column: COLUMNAS_INSCRIPCIONES.length },
+    from: { row: 1, column: 1 },
+    to: { row: 1 + filas.length, column: COLUMNAS_INSCRIPCIONES.length },
   };
-  fichas.views = [{ state: "frozen", ySplit: 2 }];
-  estilar(fichas, 2);
+  fichas.views = [{ state: "frozen", ySplit: 1 }];
+  estilar(fichas, 1);
 
   /* Hoja 2: una fila por persona autorizada, en formato largo, para poder
    * filtrar u ordenar sin girar la hoja. */

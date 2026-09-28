@@ -171,24 +171,25 @@ const CABECERAS = "Recibido,Grupo,Participante completo,Edad,Fecha de nacimiento
 
 comprobar(hoja !== undefined, "El libro se puede volver a abrir");
 if (hoja) {
-  const cabeceras = (hoja.getRow(2).values as unknown[]).slice(1).map(String);
+  const cabeceras = (hoja.getRow(1).values as unknown[]).slice(1).map(String);
   comprobar(
     cabeceras.join(",") === CABECERAS,
     `Las columnas son las acordadas (${cabeceras.join(", ")})`,
   );
   comprobar(
-    hoja.getCell(1, 3).value === "Participante" &&
+    hoja.getCell(1, 3).value === "Participante completo" &&
       hoja.getCell(1, 11).value === "Representante" &&
-      hoja.getCell(1, 17).value === "Contacto de emergencia",
-    "La primera fila agrupa las columnas por bloques",
+      hoja.getCell(1, 17).value === "Contacto de emergencia" &&
+      (hoja.model.merges ?? []).length === 0,
+    "La primera fila trae los 20 encabezados, sin agrupar por bloques",
   );
-  comprobar(hoja.rowCount === filas.length + 2, `Hay ${filas.length} filas de datos`);
+  comprobar(hoja.rowCount === filas.length + 1, `Hay ${filas.length} filas de datos`);
   comprobar(
-    String((hoja.getRow(3).values as unknown[])[4] ?? "") === "—",
+    String((hoja.getRow(2).values as unknown[])[4] ?? "") === "—",
     "Una fila sin detalle rellena la edad con guion",
   );
   comprobar(
-    String((hoja.getRow(4).values as unknown[])[3] ?? "") === "Luis Martínez",
+    String((hoja.getRow(3).values as unknown[])[3] ?? "") === "Luis Martínez",
     "La segunda fila conserva al participante",
   );
 }

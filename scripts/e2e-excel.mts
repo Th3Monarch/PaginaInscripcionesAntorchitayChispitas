@@ -77,32 +77,23 @@ const fichas = libro.getWorksheet("Inscripciones");
 const autorizadas = libro.getWorksheet("Autorizadas");
 const resumen = libro.getWorksheet("Resumen");
 
-/* Encabezados de la hoja principal: la fila 1 agrupa por bloques y la 2
- * trae los nombres de las columnas. */
-const grupos = [
-  [3, 10, "Participante"],
-  [11, 16, "Representante"],
-  [17, 20, "Contacto de emergencia"],
-] as const;
+/* Encabezados de la hoja principal en una sola fila: sin agrupar por
+ * bloques. */
 const cabeceras = ["Recibido", "Grupo", "Participante completo", "Edad", "Fecha de nacimiento", "Grado", "Institución educativa", "Teléfono (familia)", "Correo (familia)", "Dirección", "Representante", "Parentesco", "Teléfono principal", "Teléfono alternativo", "Correo", "Documento de identidad", "Contacto de emergencia", "Parentesco", "Teléfono principal", "Teléfono alternativo"];
 
-for (const [desde, hasta, nombre] of grupos) {
-  comprobar(
-    fichas.getCell(1, desde).value === nombre &&
-      fichas.getCell(1, desde).isMerged &&
-      fichas.getCell(1, hasta).isMerged,
-    `El bloque "${nombre}" agrupa de la columna ${desde} a la ${hasta}`,
-  );
-}
+comprobar(
+  (fichas.model.merges ?? []).length === 0,
+  "No hay celdas fusionadas: los bloques ya no estan",
+);
 for (let c = 1; c <= cabeceras.length; c++) {
   comprobar(
-    fichas.getCell(2, c).value === cabeceras[c - 1],
+    fichas.getCell(1, c).value === cabeceras[c - 1],
     `Columna ${c} se llama "${cabeceras[c - 1]}"`,
   );
 }
 
 /* Ficha con detalle: valores del participante y del representante. */
-const filaNueva = 3;
+const filaNueva = 2;
 const celda = (hoja: ExcelJS.Worksheet, fila: number, columna: number) =>
   String(hoja.getCell(fila, columna).value ?? "");
 comprobar(
@@ -136,7 +127,7 @@ comprobar(
 );
 
 /* Ficha antigua: sin detalle, los campos se rellenan con guion. */
-const filaVieja = 4;
+const filaVieja = 3;
 comprobar(
   celda(fichas, filaVieja, 3) === "Pedro López",
   "La fila antigua sigue apareciendo",
