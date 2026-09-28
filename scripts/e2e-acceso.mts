@@ -98,6 +98,94 @@ comprobar(
   `Con la cookie se puede pedir el Excel (HTTP ${excelConSesion.status})`,
 );
 
+/* 4b. Quitar una ficha: tan cerrado como la lista. */
+const borrarSinSesion = await fetch(
+  `${BASE}/api/inscripciones?envio=${crypto.randomUUID()}`,
+  { method: "DELETE" },
+);
+comprobar(
+  borrarSinSesion.status === 401,
+  `Quitar sin sesion se rechaza (HTTP ${borrarSinSesion.status})`,
+);
+
+const sinEnvio = await fetch(`${BASE}/api/inscripciones`, {
+  method: "DELETE",
+  headers: valor ? { cookie: `panel_antorcha=${valor}` } : undefined,
+});
+comprobar(
+  sinEnvio.status === 400,
+  `Quitar sin envio se rechaza (HTTP ${sinEnvio.status})`,
+);
+
+const borradoInventado = await fetch(
+  `${BASE}/api/inscripciones?envio=${crypto.randomUUID()}`,
+  {
+    method: "DELETE",
+    headers: valor ? { cookie: `panel_antorcha=${valor}` } : undefined,
+  },
+);
+comprobar(
+  borradoInventado.status === 200 || borradoInventado.status === 502,
+  `Quitar un uuid inexistente no rompe (HTTP ${borradoInventado.status})`,
+);
+
+/* 4c. Con registro configurado, se crea una ficha, aparece en la lista y se
+ * puede quitar de verdad. Sin Supabase este ciclo no tiene donde vivir. */
+const listaCuerpo = await conSesion
+  .json()
+  .catch(() => null) as { configurado?: boolean } | null;
+if (listaCuerpo?.configurado) {
+  const agente = crypto.randomUUID();
+  const creada = await pedir("POST", "/api/inscripciones", {
+    envio: agente,
+    grupo: "chispita",
+    participante: "Quitar Prueba",
+    contacto: "8095550000",
+  });
+  comprobar(
+    creada.estado === 201,
+    `Se crea una ficha para quitar (HTTP ${creada.estado})`,
+  );
+
+  const cuerpoConFicha = (await (
+    await fetch(`${BASE}/api/inscripciones`, {
+      headers: valor ? { cookie: `panel_antorcha=${valor}` } : undefined,
+    })
+  )
+    .json()
+    .catch(() => null)) as { registros?: { envio: string }[] } | null;
+  comprobar(
+    cuerpoConFicha?.registros?.some((f) => f.envio === agente) ?? false,
+    "La ficha nueva aparece en la lista",
+  );
+
+  const borrado = await fetch(
+    `${BASE}/api/inscripciones?envio=${agente}`,
+    {
+      method: "DELETE",
+      headers: valor ? { cookie: `panel_antorcha=${valor}` } : undefined,
+    },
+  );
+  comprobar(
+    borrado.status === 200,
+    `Se quita la ficha (HTTP ${borrado.status})`,
+  );
+
+  const cuerpoTras = (await (
+    await fetch(`${BASE}/api/inscripciones`, {
+      headers: valor ? { cookie: `panel_antorcha=${valor}` } : undefined,
+    })
+  )
+    .json()
+    .catch(() => null)) as { registros?: { envio: string }[] } | null;
+  comprobar(
+    !(cuerpoTras?.registros ?? []).some((f) => f.envio === agente),
+    "La ficha ya no aparece tras quitarla",
+  );
+} else {
+  console.log("[salteado] Sin Supabase no se prueba el ciclo crear/quitar");
+}
+
 /* 5. Una cookie fabricada a mano no vale. */
 const falsificada = await fetch(`${BASE}/api/inscripciones`, {
   headers: { cookie: "panel_antorcha=9999999999999.abc123" },

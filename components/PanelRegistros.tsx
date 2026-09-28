@@ -33,6 +33,8 @@ export function PanelRegistros() {
   const [cargando, setCargando] = useState(false);
   const [fallo, setFallo] = useState<string | null>(null);
   const [actualizado, setActualizado] = useState<string | null>(null);
+  const [aQuitar, setAQuitar] = useState<string | null>(null);
+  const [quitando, setQuitando] = useState(false);
   const descargando = useRef(false);
 
   const consultar = useCallback(async (): Promise<Respuesta> => {
@@ -133,6 +135,30 @@ export function PanelRegistros() {
     setFallo(null);
   }
 
+  async function borrar(envio: string) {
+    if (quitando) return;
+    setQuitando(true);
+    try {
+      const respuesta = await fetch(
+        `/api/inscripciones?envio=${encodeURIComponent(envio)}`,
+        { method: "DELETE", cache: "no-store" },
+      );
+      if (respuesta.status === 401) {
+        setDentro(false);
+        return;
+      }
+      if (!respuesta.ok) throw new Error(String(respuesta.status));
+      setRegistros((actual) => actual.filter((f) => f.envio !== envio));
+      setFallo(null);
+      setActualizado(new Date().toLocaleTimeString("es-DO"));
+    } catch {
+      setFallo("No se pudo quitar la ficha.");
+    } finally {
+      setQuitando(false);
+      setAQuitar(null);
+    }
+  }
+
   async function descargar() {
     if (descargando.current) return;
     descargando.current = true;
@@ -223,6 +249,12 @@ export function PanelRegistros() {
                           {bloque.nombre}
                         </th>
                       ))}
+                      <th
+                        rowSpan={2}
+                        className="border-l border-line px-2 py-1.5 text-center text-xs font-semibold text-muted"
+                      >
+                        Acción
+                      </th>
                     </tr>
                     <tr className="border-b border-line">
                       {COLUMNAS_INSCRIPCIONES.slice(2).map((columna) => (
@@ -256,6 +288,46 @@ export function PanelRegistros() {
                               {plano[columna.key]}
                             </td>
                           ))}
+                          <td className="border-l border-line/60 px-2 py-2">
+                            {aQuitar === fila.envio ? (
+                              <div
+                                className="flex items-center gap-2"
+                                role="group"
+                                aria-label="Confirmar el quitar"
+                              >
+                                <span className="text-xs font-medium text-ink-soft">
+                                  ¿Quitar la ficha?
+                                </span>
+                                <button
+                                  type="button"
+                                  data-confirmar-quitar
+                                  className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-[#7d1d12] bg-[#7d1d12] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#a32819] disabled:cursor-not-allowed disabled:opacity-55"
+                                  disabled={quitando}
+                                  onClick={() => void borrar(fila.envio)}
+                                >
+                                  Sí, quitar
+                                </button>
+                                <button
+                                  type="button"
+                                  data-cancelar-quitar
+                                  className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-line-strong px-3 text-xs font-semibold text-ink transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-55"
+                                  disabled={quitando}
+                                  onClick={() => setAQuitar(null)}
+                                >
+                                  No
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                aria-label={`Quitar la ficha de ${fila.participante}`}
+                                className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-line-strong px-3 text-xs font-semibold text-ink transition-colors hover:border-[#7d1d12] hover:text-[#7d1d12] disabled:cursor-not-allowed disabled:opacity-55"
+                                onClick={() => setAQuitar(fila.envio)}
+                              >
+                                Quitar
+                              </button>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}

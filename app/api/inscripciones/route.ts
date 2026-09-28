@@ -16,6 +16,8 @@ export const dynamic = "force-dynamic";
 
 const LIMITE_FILAS = 2000;
 
+const ES_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function listar(): Promise<FilaRegistro[]> {
   const supabase = supabaseAdmin();
   if (!supabase) return [];
@@ -85,6 +87,44 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ guardado: true }, { status: 201 });
+}
+
+/**
+ * DELETE: lo usa el panel para quitar una ficha de la lista. Tan cerrado como
+ * GET: sin sesion de panel no se borra nada.
+ */
+export async function DELETE(request: Request) {
+  if (!CLAVE_VIGENTE) {
+    return NextResponse.json(
+      { error: "El panel no tiene clave configurada" },
+      { status: 503 },
+    );
+  }
+
+  const almacen = await cookies();
+  if (!tokenValido(almacen.get(COOKIE_PANEL)?.value)) {
+    return NextResponse.json({ error: "Sin acceso al panel" }, { status: 401 });
+  }
+
+  if (!supabaseAdmin()) {
+    return NextResponse.json({ error: "sin configurar" }, { status: 502 });
+  }
+
+  const envio = new URL(request.url).searchParams.get("envio");
+  if (!envio || !ES_UUID.test(envio)) {
+    return NextResponse.json({ error: "Falta un envio valido" }, { status: 400 });
+  }
+
+  const { error } = await supabaseAdmin()!
+    .from(TABLA)
+    .delete()
+    .eq("envio", envio);
+
+  if (error) {
+    return NextResponse.json({ error: "No se pudo quitar" }, { status: 502 });
+  }
+
+  return NextResponse.json({ quitado: true });
 }
 
 /**

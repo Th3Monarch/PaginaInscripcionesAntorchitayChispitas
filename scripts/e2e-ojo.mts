@@ -36,6 +36,24 @@ await pagina.goto(`${BASE}/registros`, { waitUntil: "networkidle0" });
 
 const SECRETA = "Prueba-Ojo-123";
 
+/* Se crea una ficha de prueba por la API publica antes de entrar: asi el
+ * "Quitar" del panel tiene algo que quitar. Si Supabase no esta configurado
+ * la ficha no se guarda y esa parte se salta. */
+const NOMBRE_QUITAR = "Quitar Prueba UI";
+const envioPrueba = crypto.randomUUID();
+const creada = await fetch(`${BASE}/api/inscripciones`, {
+  method: "POST",
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify({
+    envio: envioPrueba,
+    grupo: "chispita",
+    participante: NOMBRE_QUITAR,
+    contacto: "8095550000",
+  }),
+});
+const hayRegistro =
+  (await creada.json().catch(() => null))?.guardado === true;
+
 /* 1. Empieza enmascarada, que es lo seguro por defecto. */
 const inicial = await pagina.evaluate(() => {
   const campo = document.querySelector<HTMLInputElement>("#clave-panel");
@@ -171,6 +189,41 @@ comprobar(
   dentro.includes("Fichas nuevas") && dentro.includes("Descargar Excel"),
   "Entrar con la clave correcta sigue llevando a la lista",
 );
+
+/* 8. Se puede quitar una ficha desde el panel, con su confirmacion. */
+if (!hayRegistro) {
+  console.log("[salteado] Sin Supabase no hay ficha que quitar en el panel");
+} else {
+  await pagina.waitForFunction(
+    (nombre) =>
+      document.querySelector(
+        `[aria-label="Quitar la ficha de ${nombre}"]`,
+      ) !== null,
+    { timeout: 10000 },
+    NOMBRE_QUITAR,
+  );
+
+  /* Cancelar deja la ficha en su sitio y vuelve al boton. */
+  await pagina.click(`[aria-label="Quitar la ficha de ${NOMBRE_QUITAR}"]`);
+  await pagina.waitForSelector("[data-confirmar-quitar]", { timeout: 5000 });
+  await pagina.click("[data-cancelar-quitar]");
+  const sigueTrasCancelar = await pagina.evaluate(
+    (nombre) => document.body.innerText.includes(nombre),
+    NOMBRE_QUITAR,
+  );
+  comprobar(sigueTrasCancelar, "Cancelar deja la ficha en su sitio");
+
+  /* Confirmar la quita de la lista y del servidor. */
+  await pagina.click(`[aria-label="Quitar la ficha de ${NOMBRE_QUITAR}"]`);
+  await pagina.waitForSelector("[data-confirmar-quitar]", { timeout: 5000 });
+  await pagina.click("[data-confirmar-quitar]");
+  await pagina.waitForFunction(
+    (nombre) => !document.body.innerText.includes(nombre),
+    { timeout: 10000 },
+    NOMBRE_QUITAR,
+  );
+  comprobar(true, "Al confirmar, la ficha desaparece del panel");
+}
 
 await navegador.close();
 
