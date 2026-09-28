@@ -5,7 +5,12 @@ import { Aviso } from "@/components/ui/Campos";
 import { Boton, Seccion } from "@/components/ui/Layout";
 import { CampoClave } from "@/components/ui/Campos";
 import { GRUPOS, isGroupId } from "@/lib/config";
-import type { FilaRegistro } from "@/lib/registro";
+import {
+  BLOQUES_INSCRIPCIONES,
+  COLUMNAS_INSCRIPCIONES,
+  filaPlana,
+  type FilaRegistro,
+} from "@/lib/registro";
 
 type Respuesta = {
   configurado?: boolean;
@@ -158,7 +163,7 @@ export function PanelRegistros() {
       {dentro ? (
         <Seccion
           titulo="Fichas nuevas"
-          descripcion="Un aviso por cada ficha generada. Los datos detallados viajan en el papel que entrega la familia."
+          descripcion="Aquí quedan anotados las fichas y todos sus datos, igual que los exporta el Excel."
           acciones={
             <div className="flex gap-2">
               <Boton
@@ -201,40 +206,59 @@ export function PanelRegistros() {
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-line text-left">
-                      <th className="px-2 py-2 font-semibold text-ink">
-                        Recibido
+                    <tr className="border-b border-line">
+                      <th
+                        colSpan={2}
+                        rowSpan={2}
+                        className="border-r border-line px-2 py-2 text-left font-semibold text-ink"
+                      >
+                        Recibido / Grupo
                       </th>
-                      <th className="px-2 py-2 font-semibold text-ink">
-                        Grupo
-                      </th>
-                      <th className="px-2 py-2 font-semibold text-ink">
-                        Participante
-                      </th>
-                      <th className="px-2 py-2 font-semibold text-ink">
-                        Contacto
-                      </th>
+                      {BLOQUES_INSCRIPCIONES.map((bloque) => (
+                        <th
+                          key={bloque.nombre}
+                          colSpan={bloque.hasta - bloque.desde + 1}
+                          className="border-r border-line px-2 py-1.5 text-center text-xs font-semibold text-muted"
+                        >
+                          {bloque.nombre}
+                        </th>
+                      ))}
+                    </tr>
+                    <tr className="border-b border-line">
+                      {COLUMNAS_INSCRIPCIONES.slice(2).map((columna) => (
+                        <th
+                          key={columna.key}
+                          className="border-r border-line px-2 py-1.5 text-left font-semibold text-ink"
+                        >
+                          {columna.header}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {registros.map((fila) => (
-                      <tr key={fila.envio} className="border-b border-line/60">
-                        <td className="px-2 py-2 whitespace-nowrap text-muted">
-                          {new Date(fila.recibido).toLocaleString("es-DO")}
-                        </td>
-                        <td className="px-2 py-2 text-ink">
-                          {isGroupId(fila.grupo)
-                            ? GRUPOS[fila.grupo].nombre
-                            : fila.grupo}
-                        </td>
-                        <td className="px-2 py-2 text-ink">
-                          {fila.participante}
-                        </td>
-                        <td className="px-2 py-2 whitespace-nowrap text-muted">
-                          {fila.contacto || "—"}
-                        </td>
-                      </tr>
-                    ))}
+                    {registros.map((fila) => {
+                      const plano = filaPlana(fila);
+                      return (
+                        <tr key={fila.envio} className="border-b border-line/60">
+                          <td className="px-2 py-2 whitespace-nowrap text-muted">
+                            {plano.recibido}
+                          </td>
+                          <td className="border-r border-line/60 px-2 py-2 text-ink">
+                            {isGroupId(fila.grupo)
+                              ? GRUPOS[fila.grupo].nombre
+                              : fila.grupo}
+                          </td>
+                          {COLUMNAS_INSCRIPCIONES.slice(2).map((columna) => (
+                            <td
+                              key={columna.key}
+                              className="border-r border-line/60 px-2 py-2 text-ink"
+                            >
+                              {plano[columna.key]}
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -2,6 +2,7 @@ import { z } from "zod";
 import { isGroupId, GRUPOS, type GroupId } from "./config";
 import { calcularEdad, formatFechaDMY } from "./format";
 import type { EnrollmentValues } from "./schemas";
+import { mostrarTelefono } from "./telefono";
 
 /**
  * Lo que sale del navegador hacia el servidor.
@@ -169,7 +170,7 @@ const ENCABEZADO: Record<string, unknown> = {
   alignment: { vertical: "middle", horizontal: "center", wrapText: true },
 };
 
-const COLUMNAS_INSCRIPCIONES = [
+export const COLUMNAS_INSCRIPCIONES = [
   { header: "Recibido", key: "recibido", width: 17 },
   { header: "Grupo", key: "grupo", width: 12 },
   { header: "Participante completo", key: "participante", width: 26 },
@@ -192,7 +193,19 @@ const COLUMNAS_INSCRIPCIONES = [
   { header: "Teléfono alternativo", key: "telefonoAlternativoEmergencia", width: 18 },
 ] as const;
 
-function filaPlana(fila: FilaRegistro): Record<string, string> {
+/** Columna de cada bloque de la hoja y de la tabla del panel (de 1 a N). */
+export const BLOQUES_INSCRIPCIONES = [
+  { nombre: "Participante", desde: 3, hasta: 10 },
+  { nombre: "Representante", desde: 11, hasta: 16 },
+  { nombre: "Contacto de emergencia", desde: 17, hasta: 20 },
+] as const;
+
+/**
+ * Cada ficha convertida a una fila plana, lista para la hoja de Excel y para
+ * la tabla del panel. El panel y el archivo comparten esta proyeccion: no hay
+ * dos versiones de lo que se ve.
+ */
+export function filaPlana(fila: FilaRegistro): Record<string, string> {
   const d = detalleDe(fila);
   const edad = d ? calcularEdad(d.participante.fechaNacimiento) : -1;
 
@@ -204,22 +217,24 @@ function filaPlana(fila: FilaRegistro): Record<string, string> {
     fechaNacimiento: d ? formatFechaDMY(d.participante.fechaNacimiento) : "—",
     grado: d ? celula(d.participante.grado) : "—",
     institucion: d ? celula(d.participante.institucion) : "—",
-    telefonoFamilia: d ? celula(d.participante.telefonoFamiliar) : "—",
+    telefonoFamilia: d ? celula(mostrarTelefono(d.participante.telefonoFamiliar)) : "—",
     correoFamilia: d ? celula(d.participante.correoFamiliar) : "—",
     direccion: d ? celula(d.participante.direccion) : "—",
     representante: d ? celula(d.representante.nombres) : "—",
     parentescoRepresentante: d ? celula(d.representante.parentesco) : "—",
-    telefonoRepresentante: d ? celula(d.representante.telefonoPrincipal) : "—",
+    telefonoRepresentante: d
+      ? celula(mostrarTelefono(d.representante.telefonoPrincipal))
+      : "—",
     telefonoAlternativoRepresentante: d
-      ? celula(d.representante.telefonoAlternativo)
+      ? celula(mostrarTelefono(d.representante.telefonoAlternativo ?? ""))
       : "—",
     correoRepresentante: d ? celula(d.representante.correo) : "—",
     documento: d ? celula(d.representante.documento) : "—",
     emergenciaNombres: d ? celula(d.emergencia.nombres) : "—",
     emergenciaParentesco: d ? celula(d.emergencia.parentesco) : "—",
-    telefonoEmergencia: d ? celula(d.emergencia.telefono) : "—",
+    telefonoEmergencia: d ? celula(mostrarTelefono(d.emergencia.telefono)) : "—",
     telefonoAlternativoEmergencia: d
-      ? celula(d.emergencia.telefonoAlternativo)
+      ? celula(mostrarTelefono(d.emergencia.telefonoAlternativo ?? ""))
       : "—",
   };
 }
@@ -269,12 +284,15 @@ export async function libroExcel(filas: FilaRegistro[]): Promise<Uint8Array> {
   for (const fila of filas) fichas.addRow(filaPlana(fila));
 
   fichas.insertRow(1, []);
-  fichas.mergeCells("C1:J1");
-  fichas.mergeCells("K1:P1");
-  fichas.mergeCells("Q1:T1");
-  fichas.getCell("C1").value = "Participante";
-  fichas.getCell("K1").value = "Representante";
-  fichas.getCell("Q1").value = "Contacto de emergencia";
+  for (const bloque of BLOQUES_INSCRIPCIONES) {
+    fichas.mergeCells({
+      top: 1,
+      left: bloque.desde,
+      bottom: 1,
+      right: bloque.hasta,
+    });
+    fichas.getCell(1, bloque.desde).value = bloque.nombre;
+  }
 
   fichas.autoFilter = {
     from: { row: 1, column: 1 },
@@ -298,7 +316,7 @@ export async function libroExcel(filas: FilaRegistro[]): Promise<Uint8Array> {
         autorizada: persona.autorizada ? "Sí" : "No",
         nombre: celula(persona.nombres),
         parentesco: celula(persona.parentesco),
-        telefono: celula(persona.telefono),
+        telefono: celula(mostrarTelefono(persona.telefono)),
       });
     }
   }
