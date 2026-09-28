@@ -167,22 +167,28 @@ const abierto = new ExcelJS.Workbook();
 await abierto.xlsx.load(bytes);
 const hoja = abierto.getWorksheet("Inscripciones");
 
-const CABECERAS = "Recibido,Grupo,Participante,Edad,Fecha de nacimiento,Grado,Institución educativa,Teléfono (familia),Correo (familia),Dirección,Representante,Parentesco,Tel. representante,Tel. alternativo,Correo representante,Documento de identidad,Emergencia,Parentesco,Tel. emergencia,Tel. emergencia alt.";
+const CABECERAS = "Recibido,Grupo,Participante completo,Edad,Fecha de nacimiento,Grado,Institución educativa,Teléfono (familia),Correo (familia),Dirección,Representante,Parentesco,Teléfono principal,Teléfono alternativo,Correo,Documento de identidad,Contacto de emergencia,Parentesco,Teléfono principal,Teléfono alternativo";
 
 comprobar(hoja !== undefined, "El libro se puede volver a abrir");
 if (hoja) {
-  const cabeceras = (hoja.getRow(1).values as unknown[]).slice(1).map(String);
+  const cabeceras = (hoja.getRow(2).values as unknown[]).slice(1).map(String);
   comprobar(
     cabeceras.join(",") === CABECERAS,
     `Las columnas son las acordadas (${cabeceras.join(", ")})`,
   );
-  comprobar(hoja.rowCount === filas.length + 1, `Hay ${filas.length} filas de datos`);
   comprobar(
-    String((hoja.getRow(2).values as unknown[])[4] ?? "") === "—",
+    hoja.getCell(1, 3).value === "Participante" &&
+      hoja.getCell(1, 11).value === "Representante" &&
+      hoja.getCell(1, 17).value === "Contacto de emergencia",
+    "La primera fila agrupa las columnas por bloques",
+  );
+  comprobar(hoja.rowCount === filas.length + 2, `Hay ${filas.length} filas de datos`);
+  comprobar(
+    String((hoja.getRow(3).values as unknown[])[4] ?? "") === "—",
     "Una fila sin detalle rellena la edad con guion",
   );
   comprobar(
-    String((hoja.getRow(3).values as unknown[])[3] ?? "") === "Luis Martínez",
+    String((hoja.getRow(4).values as unknown[])[3] ?? "") === "Luis Martínez",
     "La segunda fila conserva al participante",
   );
 }

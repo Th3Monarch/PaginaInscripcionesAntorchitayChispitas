@@ -77,17 +77,32 @@ const fichas = libro.getWorksheet("Inscripciones");
 const autorizadas = libro.getWorksheet("Autorizadas");
 const resumen = libro.getWorksheet("Resumen");
 
-/* Cabeceras de la hoja principal. */
-const cabeceras = ["Recibido", "Grupo", "Participante", "Edad", "Fecha de nacimiento", "Grado", "Institución educativa", "Teléfono (familia)", "Correo (familia)", "Dirección", "Representante", "Parentesco", "Tel. representante", "Tel. alternativo", "Correo representante", "Documento de identidad", "Emergencia", "Parentesco", "Tel. emergencia", "Tel. emergencia alt."];
+/* Encabezados de la hoja principal: la fila 1 agrupa por bloques y la 2
+ * trae los nombres de las columnas. */
+const grupos = [
+  [3, 10, "Participante"],
+  [11, 16, "Representante"],
+  [17, 20, "Contacto de emergencia"],
+] as const;
+const cabeceras = ["Recibido", "Grupo", "Participante completo", "Edad", "Fecha de nacimiento", "Grado", "Institución educativa", "Teléfono (familia)", "Correo (familia)", "Dirección", "Representante", "Parentesco", "Teléfono principal", "Teléfono alternativo", "Correo", "Documento de identidad", "Contacto de emergencia", "Parentesco", "Teléfono principal", "Teléfono alternativo"];
+
+for (const [desde, hasta, nombre] of grupos) {
+  comprobar(
+    fichas.getCell(1, desde).value === nombre &&
+      fichas.getCell(1, desde).isMerged &&
+      fichas.getCell(1, hasta).isMerged,
+    `El bloque "${nombre}" agrupa de la columna ${desde} a la ${hasta}`,
+  );
+}
 for (let c = 1; c <= cabeceras.length; c++) {
   comprobar(
-    fichas.getCell(1, c).value === cabeceras[c - 1],
+    fichas.getCell(2, c).value === cabeceras[c - 1],
     `Columna ${c} se llama "${cabeceras[c - 1]}"`,
   );
 }
 
 /* Ficha con detalle: valores del participante y del representante. */
-const filaNueva = 2;
+const filaNueva = 3;
 const celda = (hoja: ExcelJS.Worksheet, fila: number, columna: number) =>
   String(hoja.getCell(fila, columna).value ?? "");
 comprobar(
@@ -121,7 +136,7 @@ comprobar(
 );
 
 /* Ficha antigua: sin detalle, los campos se rellenan con guion. */
-const filaVieja = 3;
+const filaVieja = 4;
 comprobar(
   celda(fichas, filaVieja, 3) === "Pedro López",
   "La fila antigua sigue apareciendo",

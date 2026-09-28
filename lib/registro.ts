@@ -158,7 +158,7 @@ const BORDE = {
   right: { style: "thin", color: { argb: "FF000000" } },
 } as const;
 
-/** Encabezados negros con texto blanco, como el tono sobrio del PDF. */
+/** Encabezados negros con texto blanco y centrado, como el tono del PDF. */
 const ENCABEZADO: Record<string, unknown> = {
   font: { bold: true, color: { argb: "FFFFFFFF" } },
   fill: {
@@ -166,30 +166,30 @@ const ENCABEZADO: Record<string, unknown> = {
     pattern: "solid",
     fgColor: { argb: "FF000000" },
   },
-  alignment: { vertical: "middle", horizontal: "left", wrapText: true },
+  alignment: { vertical: "middle", horizontal: "center", wrapText: true },
 };
 
 const COLUMNAS_INSCRIPCIONES = [
   { header: "Recibido", key: "recibido", width: 17 },
   { header: "Grupo", key: "grupo", width: 12 },
-  { header: "Participante", key: "participante", width: 26 },
+  { header: "Participante completo", key: "participante", width: 26 },
   { header: "Edad", key: "edad", width: 8 },
   { header: "Fecha de nacimiento", key: "fechaNacimiento", width: 14 },
-  { header: "Grado", key: "grado", width: 8 },
+  { header: "Grado", key: "grado", width: 10 },
   { header: "Institución educativa", key: "institucion", width: 24 },
   { header: "Teléfono (familia)", key: "telefonoFamilia", width: 15 },
   { header: "Correo (familia)", key: "correoFamilia", width: 24 },
   { header: "Dirección", key: "direccion", width: 26 },
   { header: "Representante", key: "representante", width: 26 },
   { header: "Parentesco", key: "parentescoRepresentante", width: 12 },
-  { header: "Tel. representante", key: "telefonoRepresentante", width: 15 },
-  { header: "Tel. alternativo", key: "telefonoAlternativoRepresentante", width: 18 },
-  { header: "Correo representante", key: "correoRepresentante", width: 24 },
-  { header: "Documento de identidad", key: "documento", width: 14 },
-  { header: "Emergencia", key: "emergenciaNombres", width: 26 },
+  { header: "Teléfono principal", key: "telefonoRepresentante", width: 15 },
+  { header: "Teléfono alternativo", key: "telefonoAlternativoRepresentante", width: 18 },
+  { header: "Correo", key: "correoRepresentante", width: 24 },
+  { header: "Documento de identidad", key: "documento", width: 16 },
+  { header: "Contacto de emergencia", key: "emergenciaNombres", width: 26 },
   { header: "Parentesco", key: "emergenciaParentesco", width: 12 },
-  { header: "Tel. emergencia", key: "telefonoEmergencia", width: 15 },
-  { header: "Tel. emergencia alt.", key: "telefonoAlternativoEmergencia", width: 18 },
+  { header: "Teléfono principal", key: "telefonoEmergencia", width: 15 },
+  { header: "Teléfono alternativo", key: "telefonoAlternativoEmergencia", width: 18 },
 ] as const;
 
 function filaPlana(fila: FilaRegistro): Record<string, string> {
@@ -234,11 +234,17 @@ const COLUMNAS_AUTORIZADAS = [
   { header: "Teléfono", key: "telefono", width: 15 },
 ] as const;
 
-function estilar(hoja: import("exceljs").Worksheet): void {
+/**
+ * Borde fino a todo, cabeza negra (todo lo que este dentro de las
+ * `filasEncabezado` primeras). En las hojas con dos filas de encabezado,
+ * Recibido y Grupo quedan fuera de los bloques y no se rellenan.
+ */
+function estilar(hoja: import("exceljs").Worksheet, filasEncabezado: number): void {
   hoja.eachRow((fila, numero) => {
-    fila.eachCell((celda) => {
+    fila.eachCell((celda, numeroColumna) => {
       celda.border = BORDE;
-      if (numero === 1) {
+      if (numero === 1 && filasEncabezado > 1 && numeroColumna <= 2) return;
+      if (numero <= filasEncabezado) {
         Object.assign(celda, ENCABEZADO);
       } else {
         celda.alignment = { vertical: "top", horizontal: "left", wrapText: true };
@@ -255,16 +261,27 @@ export async function libroExcel(filas: FilaRegistro[]): Promise<Uint8Array> {
   libro.creator = "Inscripciones Chispita y Antorchita";
   libro.created = new Date();
 
-  /* Hoja 1: una fila por ficha, con todos los datos del detalle. */
+  /* Hoja 1: una fila por ficha, con todos los datos del detalle. La primera
+   * fila agrupa las columnas por bloques: Participante, Representante y
+   * Contacto de emergencia, igual que en la ficha. */
   const fichas = libro.addWorksheet("Inscripciones");
   fichas.columns = [...COLUMNAS_INSCRIPCIONES];
   for (const fila of filas) fichas.addRow(filaPlana(fila));
+
+  fichas.insertRow(1, []);
+  fichas.mergeCells("C1:J1");
+  fichas.mergeCells("K1:P1");
+  fichas.mergeCells("Q1:T1");
+  fichas.getCell("C1").value = "Participante";
+  fichas.getCell("K1").value = "Representante";
+  fichas.getCell("Q1").value = "Contacto de emergencia";
+
   fichas.autoFilter = {
     from: { row: 1, column: 1 },
-    to: { row: 1, column: COLUMNAS_INSCRIPCIONES.length },
+    to: { row: 2, column: COLUMNAS_INSCRIPCIONES.length },
   };
-  fichas.views = [{ state: "frozen", ySplit: 1 }];
-  estilar(fichas);
+  fichas.views = [{ state: "frozen", ySplit: 2 }];
+  estilar(fichas, 2);
 
   /* Hoja 2: una fila por persona autorizada, en formato largo, para poder
    * filtrar u ordenar sin girar la hoja. */
@@ -290,7 +307,7 @@ export async function libroExcel(filas: FilaRegistro[]): Promise<Uint8Array> {
     to: { row: 1, column: COLUMNAS_AUTORIZADAS.length },
   };
   autorizadas.views = [{ state: "frozen", ySplit: 1 }];
-  estilar(autorizadas);
+  estilar(autorizadas, 1);
 
   /* Hoja 3: resumen. Totales por grupo y por dia de recepcion. */
   const resumen = libro.addWorksheet("Resumen");
