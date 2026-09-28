@@ -36,6 +36,9 @@ export function PanelRegistros() {
   const [aQuitar, setAQuitar] = useState<string | null>(null);
   const [quitando, setQuitando] = useState(false);
   const descargando = useRef(false);
+  const aQuitarFila = aQuitar
+    ? (registros.find((f) => f.envio === aQuitar) ?? null)
+    : null;
 
   const consultar = useCallback(async (): Promise<Respuesta> => {
     const respuesta = await fetch("/api/inscripciones", {
@@ -93,6 +96,18 @@ export function PanelRegistros() {
       window.clearInterval(temporizador);
     };
   }, [aplicar, consultar]);
+
+  /* El diálogo de confirmar se cierra con Escape y empieza enfocado en
+   * comentar, para que el "Sí, quitar" no se dispare de un Enter por error. */
+  useEffect(() => {
+    if (!aQuitar) return;
+    const alTecla = (evento: KeyboardEvent) => {
+      if (evento.key === "Escape") setAQuitar(null);
+    };
+    window.addEventListener("keydown", alTecla);
+    document.querySelector<HTMLButtonElement>("[data-cancelar-quitar]")?.focus();
+    return () => window.removeEventListener("keydown", alTecla);
+  }, [aQuitar]);
 
   async function entrar(evento: React.FormEvent) {
     evento.preventDefault();
@@ -289,44 +304,14 @@ export function PanelRegistros() {
                             </td>
                           ))}
                           <td className="border-l border-line/60 px-2 py-2">
-                            {aQuitar === fila.envio ? (
-                              <div
-                                className="flex items-center gap-2"
-                                role="group"
-                                aria-label="Confirmar el quitar"
-                              >
-                                <span className="text-xs font-medium text-ink-soft">
-                                  ¿Quitar la ficha?
-                                </span>
-                                <button
-                                  type="button"
-                                  data-confirmar-quitar
-                                  className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-[#7d1d12] bg-[#7d1d12] px-3 text-xs font-semibold text-white transition-colors hover:bg-[#a32819] disabled:cursor-not-allowed disabled:opacity-55"
-                                  disabled={quitando}
-                                  onClick={() => void borrar(fila.envio)}
-                                >
-                                  Sí, quitar
-                                </button>
-                                <button
-                                  type="button"
-                                  data-cancelar-quitar
-                                  className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-line-strong px-3 text-xs font-semibold text-ink transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-55"
-                                  disabled={quitando}
-                                  onClick={() => setAQuitar(null)}
-                                >
-                                  No
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                type="button"
-                                aria-label={`Quitar la ficha de ${fila.participante}`}
-                                className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-line-strong px-3 text-xs font-semibold text-ink transition-colors hover:border-[#7d1d12] hover:text-[#7d1d12] disabled:cursor-not-allowed disabled:opacity-55"
-                                onClick={() => setAQuitar(fila.envio)}
-                              >
-                                Quitar
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              aria-label={`Quitar la ficha de ${fila.participante}`}
+                              className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-line-strong px-3 text-xs font-semibold text-ink transition-colors hover:border-[#7d1d12] hover:text-[#7d1d12] disabled:cursor-not-allowed disabled:opacity-55"
+                              onClick={() => setAQuitar(fila.envio)}
+                            >
+                              Quitar
+                            </button>
                           </td>
                         </tr>
                       );
@@ -357,6 +342,52 @@ export function PanelRegistros() {
           </form>
         </Seccion>
       )}
+
+      {aQuitar ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="quitar-titulo"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          <button
+            type="button"
+            aria-label="Cancelar"
+            className="absolute inset-0 cursor-default bg-black/40"
+            onClick={() => setAQuitar(null)}
+          />
+          <div className="relative w-full max-w-md rounded-xl border border-line bg-surface p-5 shadow-lg">
+            <h3 id="quitar-titulo" className="text-base font-semibold text-ink">
+              ¿Quitar la ficha de{" "}
+              {aQuitarFila?.participante ?? "esta ficha"}?
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              Desaparece de la lista y de la base de datos. No se puede
+              recuperar desde el panel.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                data-cancelar-quitar
+                className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-line-strong px-4 text-sm font-semibold text-ink transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-55"
+                disabled={quitando}
+                onClick={() => setAQuitar(null)}
+              >
+                No
+              </button>
+              <button
+                type="button"
+                data-confirmar-quitar
+                className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg border border-[#7d1d12] bg-[#7d1d12] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#a32819] disabled:cursor-not-allowed disabled:opacity-55"
+                disabled={quitando}
+                onClick={() => void borrar(aQuitar)}
+              >
+                {quitando ? "Quitando…" : "Sí, quitar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -206,6 +206,33 @@ if (!hayRegistro) {
   /* Cancelar deja la ficha en su sitio y vuelve al boton. */
   await pagina.click(`[aria-label="Quitar la ficha de ${NOMBRE_QUITAR}"]`);
   await pagina.waitForSelector("[data-confirmar-quitar]", { timeout: 5000 });
+  const dialogoVisible = await pagina.evaluate(() => {
+    const b = document.querySelector<HTMLElement>("[data-confirmar-quitar]");
+    if (!b) return false;
+    const r = b.getBoundingClientRect();
+    return (
+      r.top >= 0 &&
+      r.left >= 0 &&
+      r.bottom <= window.innerHeight &&
+      r.right <= window.innerWidth
+    );
+  });
+  comprobar(dialogoVisible, "El dialogo queda visible y centrado, no oculto");
+
+  /* Escape cierra el dialogo sin borrar nada. */
+  await pagina.keyboard.press("Escape");
+  const cerradoEsc = await pagina.evaluate(
+    () => document.querySelector('[role="dialog"]') === null,
+  );
+  comprobar(cerradoEsc, "Escape cierra el dialogo sin borrar");
+  const sigueEsc = await pagina.evaluate(
+    (nombre) => document.body.innerText.includes(nombre),
+    NOMBRE_QUITAR,
+  );
+  comprobar(sigueEsc, "Tras Escape la ficha sigue en la lista");
+
+  await pagina.click(`[aria-label="Quitar la ficha de ${NOMBRE_QUITAR}"]`);
+  await pagina.waitForSelector("[data-confirmar-quitar]", { timeout: 5000 });
   await pagina.click("[data-cancelar-quitar]");
   const sigueTrasCancelar = await pagina.evaluate(
     (nombre) => document.body.innerText.includes(nombre),
